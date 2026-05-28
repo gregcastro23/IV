@@ -222,7 +222,7 @@ export function EmergencyView() {
             </button>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-2">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2">
             <button
               onClick={() => setPrivacyMode(true)}
               className="border border-zinc-800 rounded-md p-3 hover:border-zinc-700 hover:bg-zinc-900/40 text-left"

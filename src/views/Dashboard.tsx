@@ -112,7 +112,7 @@ export function DashboardView({ onGoEmergency }: { onGoEmergency: () => void }) 
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 border border-zinc-900 rounded-md bg-zinc-950">
-          <div className="px-5 pt-4 pb-3 border-b border-zinc-900 flex items-center justify-between">
+          <div className="px-5 pt-4 pb-3 border-b border-zinc-900 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-0 justify-between">
             <div>
               <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">Self-check</div>
               <div className="mono text-sm tracking-widest-2 uppercase text-zinc-100 mt-0.5">

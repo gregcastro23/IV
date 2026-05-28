@@ -18,7 +18,7 @@ export function ViewHeader({
         <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500 mb-1.5">
           {eyebrow}
         </div>
-        <h2 className="mono text-2xl tracking-widest-2 uppercase text-zinc-100 font-medium">
+        <h2 className="mono text-xl sm:text-2xl tracking-widest-2 uppercase text-zinc-100 font-medium">
           {title}
         </h2>
         {sub && (

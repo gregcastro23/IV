@@ -45,6 +45,16 @@ body {
 .tracking-widest-3 {
   letter-spacing: 0.3em;
 }
+/* Soften the wide letter-spacing on phones so uppercase headers and labels
+   stop wrapping awkwardly and read calmer. */
+@media (max-width: 640px) {
+  .tracking-widest-2 {
+    letter-spacing: 0.1em;
+  }
+  .tracking-widest-3 {
+    letter-spacing: 0.14em;
+  }
+}
 
 .privacy-blur {
   filter: blur(7px) saturate(0.4);
