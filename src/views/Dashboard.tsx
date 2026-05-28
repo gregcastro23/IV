@@ -86,7 +86,7 @@ export function DashboardView({ onGoEmergency }: { onGoEmergency: () => void }) 
         }
       />
 
-      <div className="grid grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
         <Metric label="Resentments written" value={sealedResentments} unit="rows" hint="On the list so far" />
         <Metric
           label="Fears named"
@@ -110,8 +110,8 @@ export function DashboardView({ onGoEmergency }: { onGoEmergency: () => void }) 
         />
       </div>
 
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-8 border border-zinc-900 rounded-md bg-zinc-950">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8 border border-zinc-900 rounded-md bg-zinc-950">
           <div className="px-5 pt-4 pb-3 border-b border-zinc-900 flex items-center justify-between">
             <div>
               <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">Self-check</div>
@@ -122,7 +122,7 @@ export function DashboardView({ onGoEmergency }: { onGoEmergency: () => void }) 
             <div className="mono text-[10px] text-zinc-600">over 7 · sit down somewhere else</div>
           </div>
 
-          <div className="grid grid-cols-2 divide-x divide-zinc-900">
+          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-zinc-900">
             <div className="p-5 space-y-6">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-1 h-3 bg-blue-400/70 rounded-sm" />
@@ -199,7 +199,7 @@ export function DashboardView({ onGoEmergency }: { onGoEmergency: () => void }) 
           )}
         </div>
 
-        <div className="col-span-4 border border-zinc-900 rounded-md bg-zinc-950 p-5">
+        <div className="lg:col-span-4 border border-zinc-900 rounded-md bg-zinc-950 p-5">
           <div className="flex items-baseline justify-between mb-1">
             <div className="mono text-sm tracking-widest-2 uppercase text-zinc-100">Today's list</div>
             <div className="mono text-[9.5px] tracking-widest-2 uppercase text-zinc-600">
@@ -245,7 +245,7 @@ export function DashboardView({ onGoEmergency }: { onGoEmergency: () => void }) 
       </div>
 
       <div className="mt-8 grid grid-cols-12 gap-4">
-        <div className="col-span-8 border border-zinc-900 rounded-md bg-zinc-950">
+        <div className="lg:col-span-8 border border-zinc-900 rounded-md bg-zinc-950">
           <div className="px-5 pt-4 pb-3 border-b border-zinc-900 flex items-center justify-between">
             <div className="mono text-sm tracking-widest-2 uppercase text-zinc-100">Last few rows</div>
             <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-600">
@@ -287,7 +287,7 @@ export function DashboardView({ onGoEmergency }: { onGoEmergency: () => void }) 
           </div>
         </div>
 
-        <div className="col-span-4 border border-zinc-900 rounded-md bg-zinc-950 p-5">
+        <div className="lg:col-span-4 border border-zinc-900 rounded-md bg-zinc-950 p-5">
           <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">
             A short instruction
           </div>

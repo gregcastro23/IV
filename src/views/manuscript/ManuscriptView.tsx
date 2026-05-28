@@ -122,7 +122,7 @@ export function ManuscriptView() {
       />
 
       {/* Counts strip */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <Counts label="Resentment rows" value={sealedR.length} />
         <Counts label="Fears named" value={sealedF.length + bracketedFearCount} />
         <Counts label="Sex conduct rows" value={sealedS.length} />
@@ -134,7 +134,7 @@ export function ManuscriptView() {
       </div>
 
       {/* Export bar */}
-      <div className="mb-6 border border-zinc-900 rounded-md bg-zinc-950 p-4 flex items-center justify-between gap-4">
+      <div className="mb-6 border border-zinc-900 rounded-md bg-zinc-950 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <I.Book size={16} className="text-zinc-400" />
           <div>
@@ -146,7 +146,7 @@ export function ManuscriptView() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => {
               setAloudIdx(0);

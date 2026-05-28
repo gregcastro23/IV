@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLedger } from "../store/LedgerContext.tsx";
 import { ViewHeader } from "../components/common.tsx";
 import { I } from "../components/Icons.tsx";
+import { useOverlay } from "../lib/useOverlay.ts";
 import { DEFECT_KEYS, VIRTUE_KEYS } from "../data/constants.ts";
 import type { Virtue } from "../types.ts";
 
@@ -19,8 +20,6 @@ interface LiabilityRowData {
 export function BalanceSheetView() {
   const { defectTallies, fearCount, assetTallies, assets, addAsset, privacyMode } = useLedger();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [virtue, setVirtue] = useState<Virtue>(VIRTUE_KEYS[0]);
-  const [note, setNote] = useState("");
 
   const liabilities: LiabilityRowData[] = [
     ...DEFECT_KEYS.map((d) => ({
@@ -35,13 +34,6 @@ export function BalanceSheetView() {
 
   const maxDefect = Math.max(1, ...liabilities.map((l) => l.count));
   const maxAsset = Math.max(1, ...Object.values(assetTallies));
-
-  const submit = () => {
-    if (!note.trim()) return;
-    addAsset(virtue, note.trim());
-    setNote("");
-    setDialogOpen(false);
-  };
 
   return (
     <div>
@@ -59,7 +51,7 @@ export function BalanceSheetView() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="border border-zinc-900 rounded-md bg-zinc-950">
           <div className="px-5 pt-4 pb-3 border-b border-zinc-900 flex items-center justify-between">
             <div>
@@ -200,88 +192,111 @@ export function BalanceSheetView() {
       </div>
 
       {dialogOpen && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm grid place-items-center z-40 p-6 anim-fade-in"
-          onClick={() => setDialogOpen(false)}
-        >
-          <div
-            className="bg-zinc-950 border border-zinc-800 rounded-md max-w-md w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between mb-1">
-              <div>
-                <div className="mono text-[10px] tracking-widest-2 uppercase text-amber-400/90">
-                  Virtue moment
-                </div>
-                <div className="mono text-base tracking-widest-2 uppercase text-zinc-100 mt-1">
-                  Log one
-                </div>
-              </div>
-              <button onClick={() => setDialogOpen(false)} className="text-zinc-500 hover:text-zinc-200">
-                <I.X size={16} />
+        <LogVirtueDialog onClose={() => setDialogOpen(false)} onSave={addAsset} />
+      )}
+    </div>
+  );
+}
+
+function LogVirtueDialog({
+  onClose,
+  onSave,
+}: {
+  onClose: () => void;
+  onSave: (virtue: Virtue, note: string) => void;
+}) {
+  const [virtue, setVirtue] = useState<Virtue>(VIRTUE_KEYS[0]);
+  const [note, setNote] = useState("");
+  const overlayRef = useOverlay<HTMLDivElement>(onClose);
+
+  const submit = () => {
+    if (!note.trim()) return;
+    onSave(virtue, note.trim());
+    onClose();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm grid place-items-center z-40 p-6 anim-fade-in"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Log a virtue moment"
+    >
+      <div
+        ref={overlayRef}
+        tabIndex={-1}
+        className="bg-zinc-950 border border-zinc-800 rounded-md max-w-md w-full p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <div className="mono text-[10px] tracking-widest-2 uppercase text-amber-400/90">
+              Virtue moment
+            </div>
+            <div className="mono text-base tracking-widest-2 uppercase text-zinc-100 mt-1">Log one</div>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="text-zinc-500 hover:text-zinc-200">
+            <I.X size={16} />
+          </button>
+        </div>
+        <p className="text-[12px] text-zinc-500 mt-2 mb-5">
+          A small concrete thing you did. The bar is on the floor.
+        </p>
+
+        <div className="mb-4">
+          <label className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">Virtue</label>
+          <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+            {VIRTUE_KEYS.map((v) => (
+              <button
+                key={v}
+                onClick={() => setVirtue(v)}
+                className={
+                  "mono text-[9.5px] tracking-widest-2 uppercase px-1.5 py-2 rounded-sm border " +
+                  (virtue === v
+                    ? "bg-amber-950/40 border-amber-900/60 text-amber-100"
+                    : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-zinc-300")
+                }
+              >
+                {v}
               </button>
-            </div>
-            <p className="text-[12px] text-zinc-500 mt-2 mb-5">
-              A small concrete thing you did. The bar is on the floor.
-            </p>
-
-            <div className="mb-4">
-              <label className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">
-                Virtue
-              </label>
-              <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-                {VIRTUE_KEYS.map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setVirtue(v)}
-                    className={
-                      "mono text-[9.5px] tracking-widest-2 uppercase px-1.5 py-2 rounded-sm border " +
-                      (virtue === v
-                        ? "bg-amber-950/40 border-amber-900/60 text-amber-100"
-                        : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-zinc-300")
-                    }
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-5">
-              <label className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">
-                What happened
-              </label>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={4}
-                placeholder="One or two sentences. Concrete."
-                className="mt-1.5 w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2.5 text-[12.5px] text-zinc-100 placeholder:text-zinc-700 focus:border-zinc-600 resize-none"
-                autoFocus
-              />
-            </div>
-
-            <div className="flex justify-between items-center">
-              <span className="mono text-[10px] text-zinc-600">stays on this device</span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setDialogOpen(false)}
-                  className="mono text-[10px] tracking-widest-2 uppercase text-zinc-400 hover:text-zinc-100 px-3 py-2"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={submit}
-                  disabled={!note.trim()}
-                  className="mono text-[10px] tracking-widest-2 uppercase text-zinc-950 bg-zinc-100 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 px-3 py-2 rounded-sm"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
-      )}
+
+        <div className="mb-5">
+          <label className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">
+            What happened
+          </label>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={4}
+            placeholder="One or two sentences. Concrete."
+            className="mt-1.5 w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2.5 text-[12.5px] text-zinc-100 placeholder:text-zinc-700 focus:border-zinc-600 resize-none"
+            autoFocus
+          />
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="mono text-[10px] text-zinc-600">stays on this device</span>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="mono text-[10px] tracking-widest-2 uppercase text-zinc-400 hover:text-zinc-100 px-3 py-2"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={submit}
+              disabled={!note.trim()}
+              className="mono text-[10px] tracking-widest-2 uppercase text-zinc-950 bg-zinc-100 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 px-3 py-2 rounded-sm"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { naturalList } from "./buildManuscript.ts";
 export function PageMode({ manuscript }: { manuscript: Manuscript }) {
   return (
     <div className="border border-zinc-900 rounded-md bg-[#faf6ef] text-zinc-900 manuscript-page max-w-[820px] mx-auto">
-      <div className="px-12 py-14">
+      <div className="px-6 sm:px-12 py-10 sm:py-14">
         <div className="text-center pb-6 border-b border-zinc-300">
           <div className="font-serif text-[10px] tracking-[0.3em] uppercase text-zinc-500">
             For my fifth step

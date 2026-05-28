@@ -55,8 +55,8 @@ export function InventoryView() {
         }
       />
 
-      <div className="flex items-end justify-between gap-4 mb-4">
-        <div className="flex gap-1">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 sm:gap-4 mb-4">
+        <div className="flex gap-1 overflow-x-auto">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -73,7 +73,7 @@ export function InventoryView() {
             </button>
           ))}
         </div>
-        <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-600 pb-1">
+        <div className="hidden sm:block mono text-[10px] tracking-widest-2 uppercase text-zinc-600 pb-1">
           three lists · take them in order
         </div>
       </div>

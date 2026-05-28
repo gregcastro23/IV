@@ -3,6 +3,7 @@
 // persisted on the device via the Settings store and applied through CSS vars.
 import { useSettings } from "../store/SettingsContext.tsx";
 import { ACCENT_PRESET_NAMES, ACCENT_PRESETS } from "../data/constants.ts";
+import { useOverlay } from "../lib/useOverlay.ts";
 import { I } from "./Icons.tsx";
 import type { Density, ManuscriptType } from "../types.ts";
 
@@ -58,15 +59,24 @@ function Segmented<T extends string>({
 }
 
 export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { settings, setSetting } = useSettings();
   if (!open) return null;
+  return <SettingsDrawer onClose={onClose} />;
+}
+
+function SettingsDrawer({ onClose }: { onClose: () => void }) {
+  const { settings, setSetting } = useSettings();
+  const overlayRef = useOverlay<HTMLDivElement>(onClose);
 
   const accentKey = JSON.stringify(settings.accent).toLowerCase();
 
   return (
     <div className="fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label="Display settings">
       <div className="absolute inset-0 bg-black/60 anim-fade-in" onClick={onClose} />
-      <div className="absolute top-0 right-0 h-screen w-[320px] bg-zinc-950 border-l border-zinc-800 anim-drawer-in flex flex-col shadow-2xl">
+      <div
+        ref={overlayRef}
+        tabIndex={-1}
+        className="absolute top-0 right-0 h-screen w-[320px] bg-zinc-950 border-l border-zinc-800 anim-drawer-in flex flex-col shadow-2xl"
+      >
         <div className="px-5 py-4 border-b border-zinc-900 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <I.Sliders size={14} className="text-zinc-400" />

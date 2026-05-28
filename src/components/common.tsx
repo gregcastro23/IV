@@ -13,7 +13,7 @@ export function ViewHeader({
   right?: ReactNode;
 }) {
   return (
-    <div className="flex items-end justify-between gap-6 pb-6 mb-6 border-b border-zinc-900">
+    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 pb-6 mb-6 border-b border-zinc-900">
       <div>
         <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500 mb-1.5">
           {eyebrow}

@@ -10,6 +10,7 @@ import type { Dispatch, PropsWithChildren, SetStateAction } from "react";
 import type {
   ActivityEntry,
   Asset,
+  Contact,
   DefectKey,
   Fear,
   Halt,
@@ -19,17 +20,20 @@ import type {
   SexConduct,
   Virtue,
 } from "../types.ts";
-import { DEFECT_KEYS, VIRTUE_KEYS, makeId } from "../data/constants.ts";
+import { makeId } from "../data/constants.ts";
+import { computeAssetTallies, computeDefectTallies, computeFearCount } from "./tallies.ts";
 import {
   INITIAL_ACTIVITY,
   SEED_ASSETS,
+  SEED_CONTACTS,
   SEED_FEARS,
   SEED_HALT,
   SEED_HALT_TASKS,
   SEED_RESENTMENTS,
   SEED_SEX,
 } from "../data/seed.ts";
-import { loadJSON, saveJSON } from "../lib/storage.ts";
+import { createVault, hasVault as hasStoredVault, openVault, writeVault } from "../lib/crypto.ts";
+import { anyOverlayOpen } from "../lib/overlays.ts";
 
 type DraftResentment = Omit<Resentment, "sealed" | "sealedAt">;
 
@@ -42,6 +46,7 @@ interface LedgerContextValue {
   halt: Halt;
   privacyMode: boolean;
   locked: boolean;
+  hasVault: boolean;
   activityLog: ActivityEntry[];
 
   setPrivacyMode: Dispatch<SetStateAction<boolean>>;
@@ -55,12 +60,21 @@ interface LedgerContextValue {
   sealSex: (s: Omit<SexConduct, "sealed">) => void;
   addAsset: (virtue: Virtue, note: string) => void;
 
+  contacts: Contact[];
+  addContact: (c: Omit<Contact, "id">) => void;
+  updateContact: (id: string, patch: Partial<Omit<Contact, "id">>) => void;
+  removeContact: (id: string) => void;
+
   defectTallies: Record<DefectKey, number>;
   fearCount: number;
   assetTallies: Record<Virtue, number>;
 
+  /** Create the encrypted vault from a brand-new code (first run). */
+  setupPin: (pin: string) => Promise<void>;
+  /** Decrypt with a code. Resolves false on the wrong code. */
+  unlock: (pin: string) => Promise<boolean>;
+  /** Flush, then clear the key and decrypted data from memory. */
   lock: () => void;
-  unlock: () => void;
 }
 
 const LedgerContext = createContext<LedgerContextValue | null>(null);
@@ -72,72 +86,73 @@ const SEED_LEDGER: LedgerData = {
   assets: SEED_ASSETS,
   haltTasks: SEED_HALT_TASKS,
   halt: SEED_HALT,
+  contacts: SEED_CONTACTS,
+};
+
+const EMPTY_LEDGER: LedgerData = {
+  resentments: [],
+  fears: [],
+  sexConduct: [],
+  assets: [],
+  haltTasks: [],
+  halt: { H: 0, A: 0, L: 0, T: 0 },
+  contacts: [],
 };
 
 export function LedgerProvider({ children }: PropsWithChildren) {
-  // Load the persisted ledger exactly once (seed on first run).
-  const initialRef = useRef<LedgerData | null>(null);
-  if (initialRef.current === null) {
-    initialRef.current = loadJSON<LedgerData>("ledger", SEED_LEDGER);
-  }
-  const initial = initialRef.current;
+  // Decrypted ledger lives only in memory, and only while unlocked.
+  const [resentments, setResentments] = useState<Resentment[]>([]);
+  const [fears, setFears] = useState<Fear[]>([]);
+  const [sexConduct, setSexConduct] = useState<SexConduct[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [haltTasks, setHaltTasks] = useState<HaltTask[]>([]);
+  const [halt, setHalt] = useState<Halt>(EMPTY_LEDGER.halt);
+  const [contacts, setContacts] = useState<Contact[]>([]);
 
-  const [resentments, setResentments] = useState<Resentment[]>(initial.resentments);
-  const [fears, setFears] = useState<Fear[]>(initial.fears);
-  const [sexConduct, setSexConduct] = useState<SexConduct[]>(initial.sexConduct);
-  const [assets, setAssets] = useState<Asset[]>(initial.assets);
-  const [haltTasks, setHaltTasks] = useState<HaltTask[]>(initial.haltTasks);
-  const [halt, setHalt] = useState<Halt>(initial.halt);
-
-  // Session-only: always start locked, never restore the blind, fresh log.
   const [privacyMode, setPrivacyMode] = useState(false);
   const [locked, setLocked] = useState(true);
+  const [hasVault, setHasVault] = useState(() => hasStoredVault());
   const [activityLog, setActivityLog] = useState<ActivityEntry[]>(INITIAL_ACTIVITY);
 
-  // Persist the whole ledger whenever any slice changes.
-  useEffect(() => {
-    saveJSON<LedgerData>("ledger", {
-      resentments,
-      fears,
-      sexConduct,
-      assets,
-      haltTasks,
-      halt,
-    });
-  }, [resentments, fears, sexConduct, assets, haltTasks, halt]);
+  const keyRef = useRef<CryptoKey | null>(null);
+  const saltRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const justLoadedRef = useRef(false);
+
+  // Always-current snapshot, so lock() can flush the latest edit even if a
+  // debounced save was still pending.
+  const dataRef = useRef<LedgerData>(EMPTY_LEDGER);
+  dataRef.current = { resentments, fears, sexConduct, assets, haltTasks, halt, contacts };
 
   const note = (msg: string) =>
     setActivityLog((l) => [{ at: new Date().toISOString(), msg }, ...l].slice(0, 24));
 
-  const defectTallies = useMemo(() => {
-    const t = Object.fromEntries(DEFECT_KEYS.map((d) => [d.key, 0])) as Record<DefectKey, number>;
-    resentments.forEach((r) => {
-      if (!r.sealed) return;
-      DEFECT_KEYS.forEach((d) => {
-        if (r.defects[d.key]) t[d.key] += 1;
-      });
-    });
-    return t;
-  }, [resentments]);
+  const applyData = (d: LedgerData) => {
+    setResentments(d.resentments);
+    setFears(d.fears);
+    setSexConduct(d.sexConduct);
+    setAssets(d.assets);
+    setHaltTasks(d.haltTasks);
+    setHalt(d.halt);
+    setContacts(d.contacts ?? SEED_CONTACTS);
+  };
 
-  const fearCount = useMemo(() => {
-    let n = fears.filter((f) => f.sealed).length;
-    resentments.forEach((r) => {
-      if (!r.sealed) return;
-      Object.values(r.affects).forEach((a) => {
-        if (a && a.on && a.fear && a.fear.trim()) n += 1;
-      });
-    });
-    return n;
-  }, [fears, resentments]);
+  // Persist (debounced) whenever the decrypted data changes while unlocked.
+  useEffect(() => {
+    if (locked || !keyRef.current || !saltRef.current) return;
+    if (justLoadedRef.current) {
+      justLoadedRef.current = false;
+      return;
+    }
+    const key = keyRef.current;
+    const salt = saltRef.current;
+    const snapshot = dataRef.current;
+    const t = setTimeout(() => void writeVault(key, salt, snapshot), 200);
+    return () => clearTimeout(t);
+  }, [resentments, fears, sexConduct, assets, haltTasks, halt, contacts, locked]);
 
-  const assetTallies = useMemo(() => {
-    const t = Object.fromEntries(VIRTUE_KEYS.map((v) => [v, 0])) as Record<Virtue, number>;
-    assets.forEach((a) => {
-      if (t[a.virtue] != null) t[a.virtue] += 1;
-    });
-    return t;
-  }, [assets]);
+  const defectTallies = useMemo(() => computeDefectTallies(resentments), [resentments]);
+  const fearCount = useMemo(() => computeFearCount(fears, resentments), [fears, resentments]);
+  const assetTallies = useMemo(() => computeAssetTallies(assets), [assets]);
 
   const sealResentment = (r: DraftResentment) => {
     note("Saved a resentment row to your private list.");
@@ -162,27 +177,58 @@ export function LedgerProvider({ children }: PropsWithChildren) {
     setHalt({ H: 0, A: 0, L: 0, T: 0 });
   };
 
-  const lock = () => {
-    note("Locked. Your notes are closed.");
-    setLocked(true);
+  const addContact = (c: Omit<Contact, "id">) => {
+    note(`Saved ${c.label.trim().toLowerCase() || "a contact"} to your contacts.`);
+    setContacts((cs) => [...cs, { ...c, id: makeId("c-") }]);
   };
-  const unlock = () => {
-    note("Unlocked for this session.");
+  const updateContact = (id: string, patch: Partial<Omit<Contact, "id">>) =>
+    setContacts((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  const removeContact = (id: string) => setContacts((cs) => cs.filter((c) => c.id !== id));
+
+  const setupPin = async (pin: string) => {
+    const { key, salt } = await createVault<LedgerData>(pin, SEED_LEDGER);
+    keyRef.current = key;
+    saltRef.current = salt;
+    justLoadedRef.current = true;
+    applyData(SEED_LEDGER);
+    setHasVault(true);
+    note("Created your code. Your notes are encrypted on this device.");
     setLocked(false);
   };
 
+  const unlock = async (pin: string): Promise<boolean> => {
+    const opened = await openVault<LedgerData>(pin);
+    if (!opened) return false;
+    keyRef.current = opened.key;
+    saltRef.current = opened.salt;
+    justLoadedRef.current = true;
+    applyData(opened.data);
+    note("Unlocked for this session.");
+    setLocked(false);
+    return true;
+  };
+
+  const doLock = (msg: string) => {
+    const key = keyRef.current;
+    const salt = saltRef.current;
+    if (key && salt) void writeVault(key, salt, dataRef.current);
+    note(msg);
+    keyRef.current = null;
+    saltRef.current = null;
+    applyData(EMPTY_LEDGER);
+    setLocked(true);
+  };
+  const lock = () => doLock("Locked. Your notes are closed.");
+
   // Soft auto-lock: two minutes hidden or unfocused will lock, so a brief
-  // tab-switch doesn't punish you.
+  // tab-switch doesn't punish you. Locking clears the key from memory.
   useEffect(() => {
     if (locked) return;
     const IDLE_MS = 2 * 60 * 1000;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const armed = (why: string) => {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        note(`Locked after two minutes ${why}.`);
-        setLocked(true);
-      }, IDLE_MS);
+      timer = setTimeout(() => doLock(`Locked after two minutes ${why}.`), IDLE_MS);
     };
     const disarm = () => {
       if (timer) {
@@ -202,12 +248,14 @@ export function LedgerProvider({ children }: PropsWithChildren) {
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("focus", onFocus);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locked]);
 
   // Escape toggles the privacy blind while unlocked.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !locked) {
+      // While an overlay is open, let it own Escape (close itself) instead.
+      if (e.key === "Escape" && !locked && !anyOverlayOpen()) {
         e.preventDefault();
         setPrivacyMode((p) => !p);
       }
@@ -225,6 +273,7 @@ export function LedgerProvider({ children }: PropsWithChildren) {
     halt,
     privacyMode,
     locked,
+    hasVault,
     activityLog,
     setPrivacyMode,
     setHalt,
@@ -235,11 +284,16 @@ export function LedgerProvider({ children }: PropsWithChildren) {
     sealFear,
     sealSex,
     addAsset,
+    contacts,
+    addContact,
+    updateContact,
+    removeContact,
     defectTallies,
     fearCount,
     assetTallies,
-    lock,
+    setupPin,
     unlock,
+    lock,
   };
 
   return <LedgerContext value={value}>{children}</LedgerContext>;

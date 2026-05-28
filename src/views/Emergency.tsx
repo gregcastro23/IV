@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useLedger } from "../store/LedgerContext.tsx";
 import { ViewHeader } from "../components/common.tsx";
 import { I } from "../components/Icons.tsx";
+import { useOverlay } from "../lib/useOverlay.ts";
+import { EmergencyContacts } from "./EmergencyContacts.tsx";
 
 const BREATH_PHASES = [
   { key: "inhale", label: "Inhale", scale: 1, dur: 4000 },
@@ -39,9 +41,17 @@ function CircuitBreaker({ onClose }: { onClose: () => void }) {
   }, [phaseIdx, running]);
 
   const phase = BREATH_PHASES[phaseIdx];
+  const overlayRef = useOverlay<HTMLDivElement>(onClose);
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-50 flex flex-col">
+    <div
+      ref={overlayRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Box breathing"
+      className="fixed inset-0 bg-zinc-950 z-50 flex flex-col"
+    >
       <div className="px-6 py-4 flex items-center justify-between border-b border-zinc-900">
         <div>
           <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">Slow down</div>
@@ -159,13 +169,6 @@ export function EmergencyView() {
     "Reach a person before reaching the page.",
   ];
 
-  const contacts = [
-    { label: "Sponsor", initials: "T.K.", line1: "Reach out anytime.", line2: "no fixed hours" },
-    { label: "Service office", initials: "INT", line1: "Walk-in 9a–9p", line2: "two blocks east" },
-    { label: "Friend in program", initials: "R.A.", line1: "Mornings only", line2: "available before 11a" },
-    { label: "Crisis line", initials: "988", line1: "24/7", line2: "voice or text" },
-  ];
-
   const pauseSteps = [
     "See this person as sick — in the same kind of way you've been sick.",
     "Ask, silently, how you could be useful to them today.",
@@ -189,8 +192,8 @@ export function EmergencyView() {
         }
       />
 
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-7 border border-zinc-900 rounded-md bg-zinc-950 p-6 flex flex-col">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-7 border border-zinc-900 rounded-md bg-zinc-950 p-6 flex flex-col">
           <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">
             First thing to try
           </div>
@@ -257,45 +260,11 @@ export function EmergencyView() {
           </div>
         </div>
 
-        <div className="col-span-5 border border-zinc-900 rounded-md bg-zinc-950">
-          <div className="px-5 pt-4 pb-3 border-b border-zinc-900 flex items-center justify-between">
-            <div>
-              <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">
-                Reach a person
-              </div>
-              <div className="mono text-sm tracking-widest-2 uppercase text-zinc-100 mt-0.5">
-                Before the page
-              </div>
-            </div>
-            <div className="mono text-[9.5px] tracking-widest-2 uppercase text-zinc-600">offline</div>
-          </div>
-          <div className="divide-y divide-zinc-900">
-            {contacts.map((c, i) => (
-              <div key={i} className="px-5 py-3.5 flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-sm border border-zinc-800 grid place-items-center mono text-[10px] text-zinc-300 bg-zinc-900/50 shrink-0">
-                  {c.initials}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">
-                    {c.label}
-                  </div>
-                  <div className="text-[12.5px] text-zinc-200 mt-0.5 truncate">{c.line1}</div>
-                  <div className="mono text-[10px] text-zinc-600 mt-0.5">{c.line2}</div>
-                </div>
-                <button
-                  aria-label={`Call ${c.label}`}
-                  className="w-8 h-8 rounded-md border border-zinc-800 hover:border-zinc-700 text-zinc-400 grid place-items-center"
-                >
-                  <I.Phone size={13} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <EmergencyContacts />
 
         {/* Pause-before-Col-4 card */}
-        <div className="col-span-12 border border-zinc-900 rounded-md bg-zinc-950 p-5">
-          <div className="grid grid-cols-[1fr_2fr] gap-6 items-start">
+        <div className="lg:col-span-12 border border-zinc-900 rounded-md bg-zinc-950 p-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6 items-start">
             <div>
               <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">
                 Before writing
@@ -321,7 +290,7 @@ export function EmergencyView() {
           </div>
         </div>
 
-        <div className="col-span-7 border border-zinc-900 rounded-md bg-zinc-950 p-5">
+        <div className="lg:col-span-7 border border-zinc-900 rounded-md bg-zinc-950 p-5">
           <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">5-4-3-2-1</div>
           <h3 className="mono text-sm tracking-widest-2 uppercase text-zinc-100 mt-1">
             Senses checklist
@@ -352,7 +321,7 @@ export function EmergencyView() {
           </div>
         </div>
 
-        <div className="col-span-5 border border-zinc-900 rounded-md bg-zinc-950 p-5">
+        <div className="lg:col-span-5 border border-zinc-900 rounded-md bg-zinc-950 p-5">
           <div className="mono text-[10px] tracking-widest-2 uppercase text-red-400/80">Don't write</div>
           <h3 className="mono text-sm tracking-widest-2 uppercase text-zinc-100 mt-1">Reminders</h3>
           <ul className="mt-4 space-y-2">

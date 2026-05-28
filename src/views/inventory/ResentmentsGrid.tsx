@@ -7,7 +7,8 @@ export function ResentmentsGrid() {
   const { resentments, privacyMode } = useLedger();
 
   return (
-    <div className="border border-zinc-800 rounded-b-md rounded-tr-md bg-zinc-950 overflow-hidden">
+    <div className="border border-zinc-800 rounded-b-md rounded-tr-md bg-zinc-950 overflow-x-auto">
+      <div className="min-w-[880px]">
       <div className={"grid " + COLS + " border-b border-zinc-900 bg-zinc-950"}>
         {[
           "#",
@@ -109,6 +110,7 @@ export function ResentmentsGrid() {
           {resentments.length} written · work down each column, not across rows
         </div>
         <div className="mono text-[10px] text-zinc-600">resentment list</div>
+      </div>
       </div>
     </div>
   );

@@ -47,8 +47,8 @@ export function SexInventory() {
   const toggle = (k: BoolField) => setDraft({ ...draft, [k]: !draft[k] });
 
   return (
-    <div className="grid grid-cols-12 gap-4">
-      <div className="col-span-7 border border-zinc-800 rounded-b-md rounded-tr-md bg-zinc-950">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="lg:col-span-7 border border-zinc-800 rounded-b-md rounded-tr-md bg-zinc-950">
         <div className="px-5 pt-4 pb-3 border-b border-zinc-900">
           <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">
             Sex conduct list
@@ -94,7 +94,7 @@ export function SexInventory() {
         </div>
       </div>
 
-      <div className="col-span-5 border border-zinc-800 rounded-b-md rounded-tr-md bg-zinc-950 p-5">
+      <div className="lg:col-span-5 border border-zinc-800 rounded-b-md rounded-tr-md bg-zinc-950 p-5">
         <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">Add a row</div>
         <div className="mono text-sm tracking-widest-2 uppercase text-zinc-100 mt-1 mb-4">
           Honest, brief, your own

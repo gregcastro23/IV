@@ -205,3 +205,16 @@ textarea:focus-visible {
 .anim-drawer-in {
   animation: drawer-in 0.22s cubic-bezier(0.3, 0.7, 0.4, 1);
 }
+@keyframes drawer-in-left {
+  from {
+    transform: translateX(-18px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.anim-drawer-in-left {
+  animation: drawer-in-left 0.22s cubic-bezier(0.3, 0.7, 0.4, 1);
+}

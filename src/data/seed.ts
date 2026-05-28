@@ -1,6 +1,7 @@
 import type {
   ActivityEntry,
   Asset,
+  Contact,
   Fear,
   Halt,
   HaltTask,
@@ -96,6 +97,15 @@ export const SEED_HALT_TASKS: HaltTask[] = [
 ];
 
 export const SEED_HALT: Halt = { H: 3, A: 6, L: 4, T: 5 };
+
+// Starter contacts. The fictional ones have no number until the user adds
+// their own people; the 988 crisis line works out of the box.
+export const SEED_CONTACTS: Contact[] = [
+  { id: "c-1", label: "Sponsor", name: "T.K.", phone: "", note: "Reach out anytime." },
+  { id: "c-2", label: "Service office", name: "INT", phone: "", note: "Walk-in 9a–9p" },
+  { id: "c-3", label: "Friend in program", name: "R.A.", phone: "", note: "Mornings only" },
+  { id: "c-4", label: "Crisis line", name: "988", phone: "988", note: "24/7 · voice or text" },
+];
 
 export const INITIAL_ACTIVITY: ActivityEntry[] = [
   { at: "init", msg: "Your private list is closed." },

@@ -1,6 +1,7 @@
 // Read-aloud teleprompter — one card at a time, full screen, arrow-key driven.
 import { useEffect, useState } from "react";
 import { I } from "../../components/Icons.tsx";
+import { useOverlay } from "../../lib/useOverlay.ts";
 import type { AloudCard } from "./buildManuscript.ts";
 
 export function ReadAloud({
@@ -15,22 +16,32 @@ export function ReadAloud({
   const [idx, setIdx] = useState(startIdx);
   const total = cards.length;
   const card = cards[Math.min(idx, total - 1)];
+  const overlayRef = useOverlay<HTMLDivElement>(onClose);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " ") {
+      if (e.key === "ArrowRight") {
         e.preventDefault();
         setIdx((i) => Math.min(total - 1, i + 1));
       }
-      if (e.key === "ArrowLeft") setIdx((i) => Math.max(0, i - 1));
-      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setIdx((i) => Math.max(0, i - 1));
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [total, onClose]);
+  }, [total]);
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-50 flex flex-col">
+    <div
+      ref={overlayRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Reading the manuscript aloud"
+      className="fixed inset-0 bg-zinc-950 z-50 flex flex-col"
+    >
       <div className="px-6 py-4 flex items-center justify-between border-b border-zinc-900">
         <div className="flex items-center gap-3">
           <I.Mic size={14} className="text-zinc-400" />

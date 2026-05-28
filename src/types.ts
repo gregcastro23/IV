@@ -129,6 +129,18 @@ export interface ActivityEntry {
   msg: string;
 }
 
+/** An emergency contact — reached before the page when things are hot. */
+export interface Contact {
+  id: string;
+  /** Role, e.g. "Sponsor". */
+  label: string;
+  /** Display name or initials, e.g. "T.K.". */
+  name: string;
+  /** Dialable number; empty until the user fills in their own. */
+  phone: string;
+  note: string;
+}
+
 /** The full set of ledger data persisted to the device. */
 export interface LedgerData {
   resentments: Resentment[];
@@ -137,6 +149,7 @@ export interface LedgerData {
   assets: Asset[];
   haltTasks: HaltTask[];
   halt: Halt;
+  contacts: Contact[];
 }
 
 // ── Settings (the user-customizable theme) ──────────────────────────────────

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useLedger } from "../../store/LedgerContext.tsx";
 import { I } from "../../components/Icons.tsx";
 import { AFFECT_DOMAINS, DEFECT_KEYS, makeEmptyAffects, makeId } from "../../data/constants.ts";
+import { validForStep as validForStepPure } from "./wizardValidation.ts";
 import type { Resentment } from "../../types.ts";
 
 type Draft = Omit<Resentment, "sealed" | "sealedAt">;
@@ -47,14 +48,7 @@ export function ResentmentsWizard() {
   const [activeIdx, setActiveIdx] = useState(0);
 
   const validRows = items.filter((i) => i.object.trim());
-  const validForStep = (s: number): boolean => {
-    if (s === 0) return validRows.length >= 1;
-    if (s === 1) return validRows.every((i) => i.cause.trim().length > 0);
-    if (s === 2) return validRows.every((i) => Object.values(i.affects).some((a) => a.on));
-    if (s === 3) return true;
-    if (s === 4) return validRows.every((i) => Object.values(i.defects).some(Boolean));
-    return false;
-  };
+  const validForStep = (s: number) => validForStepPure(s, items);
 
   const advance = () => {
     if (!validForStep(step)) return;
@@ -77,7 +71,8 @@ export function ResentmentsWizard() {
   return (
     <div className="border border-zinc-800 rounded-b-md rounded-tr-md bg-zinc-950">
       {/* Stepper */}
-      <div className="grid grid-cols-5 border-b border-zinc-900">
+      <div className="overflow-x-auto border-b border-zinc-900">
+        <div className="grid grid-cols-5 min-w-[640px]">
         {RESENTMENT_STEPS.map((c, i) => {
           const reached = i <= step;
           const current = i === step;
@@ -123,11 +118,12 @@ export function ResentmentsWizard() {
             </div>
           );
         })}
+        </div>
       </div>
 
-      <div className="grid grid-cols-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12">
         {/* Row list */}
-        <div className="col-span-4 border-r border-zinc-900">
+        <div className="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-zinc-900">
           <div className="px-4 pt-3 pb-2 border-b border-zinc-900 flex items-center justify-between">
             <div className="mono text-[10px] tracking-widest-2 uppercase text-zinc-500">
               Working down · {validRows.length} rows
@@ -175,7 +171,7 @@ export function ResentmentsWizard() {
         </div>
 
         {/* Active editor */}
-        <div className="col-span-8 p-6 min-h-[34rem]">
+        <div className="lg:col-span-8 p-6 min-h-[34rem]">
           {step === 0 && <Step1Object active={active} updateActive={updateActive} />}
           {step === 1 && <Step2Cause active={active} updateActive={updateActive} />}
           {step === 2 && <Step3Affects active={active} updateActive={updateActive} />}
@@ -352,7 +348,7 @@ function Step3Affects({ active, updateActive }: StepProps) {
               </button>
 
               {a.on && (
-                <div className="px-3.5 pb-3 pt-1 grid grid-cols-[1fr_auto_140px] gap-2 items-start">
+                <div className="px-3.5 pb-3 pt-1 grid grid-cols-1 sm:grid-cols-[1fr_auto_140px] gap-2 items-start">
                   <input
                     value={a.line}
                     onChange={(e) => setLine(d.key, e.target.value)}
