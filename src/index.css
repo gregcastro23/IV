@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+/* Custom dark variant — the app is unconditionally dark, but keep the class
+   strategy so `dark:` utilities behave predictably if ever added. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+
+  --color-ink-0: #fafafa;
+  --color-ink-900: #0a0a0b;
+  --color-ink-950: #06060a;
+}
+
+/* Accent palette defaults — overridden at runtime by the Settings drawer
+   (writes these CSS variables on :root). */
+:root {
+  --c-virtue-dark: #78350f;
+  --c-virtue: #f59e0b;
+  --c-defect-dark: #7f1d1d;
+  --c-defect: #ef4444;
+  --base-font-size: 13px;
+  --manuscript-font: Georgia, "Iowan Old Style", "Times New Roman", serif;
+}
+
+html,
+body {
+  background: #06060a;
+  color: #e4e4e7;
+}
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+.tracking-widest-2 {
+  letter-spacing: 0.22em;
+}
+.tracking-widest-3 {
+  letter-spacing: 0.3em;
+}
+
+.privacy-blur {
+  filter: blur(7px) saturate(0.4);
+  transition: filter 0.25s ease;
+  user-select: none;
+}
+.blur-transition {
+  transition: filter 0.25s ease;
+}
+
+.scan {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.012) 0 1px,
+    transparent 1px 3px
+  );
+}
+.grid-bg {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.hairline {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.ring-inset-amber {
+  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.35);
+}
+.ring-inset-crimson {
+  box-shadow: inset 0 0 0 1px rgba(190, 18, 60, 0.3);
+}
+
+.pulse-dot {
+  animation: pulse-ring 2.2s ease-in-out infinite;
+}
+@keyframes pulse-ring {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+}
+
+/* Custom slider — HALT ranges */
+input[type="range"].ledger-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  border-radius: 2px;
+}
+input[type="range"].ledger-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e4e4e7;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
+}
+input[type="range"].ledger-range.hot::-webkit-slider-thumb {
+  background: #fda4af;
+}
+input[type="range"].ledger-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e4e4e7;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+}
+input[type="range"].ledger-range.hot::-moz-range-thumb {
+  background: #fda4af;
+}
+
+/* Numeric keypad button feel */
+.keypad-btn {
+  transition: transform 60ms ease, background 120ms ease, border-color 120ms ease;
+}
+.keypad-btn:active {
+  transform: scale(0.97);
+}
+
+/* Box breathing ring */
+.breath-ring {
+  transition: transform 4s cubic-bezier(0.45, 0, 0.55, 1), opacity 4s ease;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* No outline flash on click */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.18);
+  outline-offset: 1px;
+}
+
+.vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+/* Manuscript page typography */
+.manuscript-page .font-serif {
+  font-family: var(--manuscript-font, Georgia, "Iowan Old Style", "Times New Roman", serif);
+}
+.manuscript-page {
+  font-size: var(--base-font-size, 13px);
+}
+
+/* Settings drawer entrance */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes drawer-in {
+  from {
+    transform: translateX(18px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.anim-fade-in {
+  animation: fade-in 0.18s ease;
+}
+.anim-drawer-in {
+  animation: drawer-in 0.22s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
