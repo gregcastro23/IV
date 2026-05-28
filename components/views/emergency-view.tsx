@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Shield, 
   Phone, 
@@ -11,7 +11,6 @@ import {
   Plus,
   Trash2,
   Pencil,
-  BookOpen,
   Zap,
   X
 } from 'lucide-react'
@@ -33,39 +32,14 @@ interface EmergencyViewProps {
   privacyMode: boolean
 }
 
-const GROUNDING_GUIDES = [
-  {
-    title: '5-4-3-2-1 Grounding',
-    content: 'Name 5 things you can SEE, 4 things you can TOUCH, 3 things you can HEAR, 2 things you can SMELL, 1 thing you can TASTE.',
-  },
-  {
-    title: 'Box Breathing',
-    content: 'Inhale for 4 counts. Hold for 4 counts. Exhale for 4 counts. Hold for 4 counts. Repeat 4 times.',
-  },
-  {
-    title: 'HALT Check',
-    content: 'Am I Hungry? Am I Angry? Am I Lonely? Am I Tired? Address the basic need first.',
-  },
-  {
-    title: 'This Too Shall Pass',
-    content: 'Feelings are not facts. This moment is temporary. You have survived 100% of your worst days.',
-  },
-  {
-    title: 'Play the Tape Forward',
-    content: 'If I act on this impulse, what happens next? Tomorrow? Next week? Is that what I want?',
-  },
-  {
-    title: 'Reach Out',
-    content: 'Call someone. Text someone. You are not meant to do this alone. Connection is the opposite of isolation.',
-  },
-]
-
 export function EmergencyView({ privacyMode }: EmergencyViewProps) {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [isTimerActive, setIsTimerActive] = useState(false)
-  const [timerSeconds, setTimerSeconds] = useState(300) // 5 minutes
+  const [timerSeconds, setTimerSeconds] = useState(300)
   const [isPaused, setIsPaused] = useState(false)
   const [showCircuitBreaker, setShowCircuitBreaker] = useState(false)
+  const [breathPhase, setBreathPhase] = useState<'inhale' | 'hold1' | 'exhale' | 'hold2'>('inhale')
+  const [breathCount, setBreathCount] = useState(0)
   
   // Contact dialog
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false)
@@ -93,6 +67,24 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
     }
   }, [isTimerActive, isPaused, timerSeconds])
 
+  // Box breathing animation
+  useEffect(() => {
+    if (!showCircuitBreaker) return
+    
+    const phases: Array<'inhale' | 'hold1' | 'exhale' | 'hold2'> = ['inhale', 'hold1', 'exhale', 'hold2']
+    let currentPhaseIndex = 0
+    
+    const interval = setInterval(() => {
+      currentPhaseIndex = (currentPhaseIndex + 1) % phases.length
+      setBreathPhase(phases[currentPhaseIndex])
+      if (currentPhaseIndex === 0) {
+        setBreathCount(prev => prev + 1)
+      }
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [showCircuitBreaker])
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -115,7 +107,6 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
     setIsPaused(false)
   }
 
-  // Contact management
   const resetContactForm = () => {
     setContactName('')
     setContactPhone('')
@@ -154,135 +145,186 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
     setIsContactDialogOpen(true)
   }
 
+  const activateCircuitBreaker = () => {
+    setShowCircuitBreaker(true)
+    setBreathPhase('inhale')
+    setBreathCount(0)
+    startTimer()
+  }
+
+  const getBreathInstruction = () => {
+    switch (breathPhase) {
+      case 'inhale': return 'INHALE'
+      case 'hold1': return 'HOLD'
+      case 'exhale': return 'EXHALE'
+      case 'hold2': return 'HOLD'
+    }
+  }
+
+  const getBreathRingScale = () => {
+    switch (breathPhase) {
+      case 'inhale': return 'scale-100'
+      case 'hold1': return 'scale-100'
+      case 'exhale': return 'scale-75'
+      case 'hold2': return 'scale-75'
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-mono font-semibold flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            Emergency Toolkit
+            <Zap className="h-5 w-5 text-primary" />
+            Emergency Grounding Hub
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Immediate grounding protocols for moments of volatility
+            Tactical protocols for moments of acute volatility
           </p>
         </div>
       </div>
 
-      {/* Circuit Breaker - Full Screen Overlay */}
+      {/* Full Viewport Circuit Breaker */}
       {showCircuitBreaker && (
-        <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
-          <div className="text-center space-y-8 p-8 max-w-md">
+        <div className="fixed inset-0 z-50 bg-background">
+          <div className="h-full flex flex-col items-center justify-center p-8">
+            {/* Close Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4"
+              className="absolute top-6 right-6 h-12 w-12"
               onClick={() => setShowCircuitBreaker(false)}
             >
               <X className="h-6 w-6" />
             </Button>
 
-            <div className="space-y-4">
-              <Zap className="h-16 w-16 mx-auto text-primary" />
-              <h2 className="text-2xl font-mono font-semibold">Circuit Breaker Active</h2>
-              <p className="text-muted-foreground">
-                All inventory text is hidden. Focus on grounding.
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <Zap className="h-8 w-8 text-primary" />
+                <h1 className="text-2xl font-mono font-semibold tracking-wider">
+                  CIRCUIT BREAKER ACTIVE
+                </h1>
+              </div>
+              <p className="text-muted-foreground font-mono text-sm">
+                All inventory data hidden. Focus on grounding.
               </p>
             </div>
 
-            <div className="space-y-4">
-              <div className="text-6xl font-mono font-bold text-primary">
-                {formatTime(timerSeconds)}
-              </div>
-              
-              <div className="flex items-center justify-center gap-3">
-                {!isTimerActive ? (
-                  <Button size="lg" onClick={startTimer} className="gap-2">
-                    <Play className="h-5 w-5" />
-                    Start 5-Minute Timer
-                  </Button>
-                ) : (
-                  <>
-                    <Button size="lg" variant="outline" onClick={togglePause}>
-                      {isPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
-                    </Button>
-                    <Button size="lg" variant="outline" onClick={resetTimer}>
-                      <RotateCcw className="h-5 w-5" />
-                    </Button>
-                  </>
+            {/* Breathing Ring */}
+            <div className="relative flex items-center justify-center mb-8">
+              <div 
+                className={cn(
+                  "w-64 h-64 rounded-full border-4 border-primary/30 transition-transform duration-[4000ms] ease-in-out flex items-center justify-center",
+                  getBreathRingScale()
                 )}
+              >
+                <div className="text-center">
+                  <p className="text-4xl font-mono font-bold text-primary tracking-widest">
+                    {getBreathInstruction()}
+                  </p>
+                  <p className="text-lg font-mono text-muted-foreground mt-2">
+                    4 seconds
+                  </p>
+                </div>
               </div>
+              {/* Outer glow ring */}
+              <div 
+                className={cn(
+                  "absolute w-72 h-72 rounded-full border border-primary/10 transition-transform duration-[4000ms] ease-in-out",
+                  getBreathRingScale()
+                )}
+              />
             </div>
 
-            <div className="p-6 bg-secondary/50 rounded-lg text-left space-y-2">
-              <p className="font-mono text-sm font-medium">Box Breathing</p>
-              <p className="text-sm text-muted-foreground">
-                Inhale 4 counts → Hold 4 counts → Exhale 4 counts → Hold 4 counts
+            {/* Timer */}
+            <div className="text-center mb-8">
+              <p className="text-6xl font-mono font-bold text-foreground tracking-wider">
+                {formatTime(timerSeconds)}
+              </p>
+              <p className="text-sm font-mono text-muted-foreground mt-2">
+                Breath cycles completed: {breathCount}
               </p>
             </div>
 
-            <Button 
-              variant="ghost" 
-              onClick={() => setShowCircuitBreaker(false)}
-              className="text-muted-foreground"
-            >
-              Exit Circuit Breaker
-            </Button>
+            {/* Controls */}
+            <div className="flex items-center gap-4">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={togglePause}
+                className="font-mono"
+              >
+                {isPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={resetTimer}
+                className="font-mono"
+              >
+                <RotateCcw className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {/* Exit hint */}
+            <p className="absolute bottom-8 text-xs font-mono text-muted-foreground/50">
+              Press ESC or click X to exit circuit breaker
+            </p>
           </div>
         </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Circuit Breaker Card */}
+        {/* Circuit Breaker Activation Card */}
         <Card className="border-primary/30 bg-primary/5">
           <CardHeader>
-            <CardTitle className="text-base font-mono flex items-center gap-2">
+            <CardTitle className="text-sm font-mono uppercase tracking-wider flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary" />
-              Craving / Anxiety Circuit Breaker
+              Anxiety Circuit Breaker
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Immediately collapses all inventory text and starts a grounding timer.
+              Immediately clears all inventory data from view and initiates a 5-minute 
+              box-breathing protocol with visual ring indicator.
             </p>
             <Button 
-              onClick={() => {
-                setShowCircuitBreaker(true)
-                startTimer()
-              }}
-              className="w-full gap-2 font-mono"
+              onClick={activateCircuitBreaker}
+              className="w-full gap-2 font-mono text-xs h-12"
               size="lg"
             >
               <Zap className="h-4 w-4" />
-              Activate Circuit Breaker
+              ACTIVATE CIRCUIT BREAKER
             </Button>
           </CardContent>
         </Card>
 
-        {/* Grounding Timer */}
+        {/* Standalone Timer */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-mono flex items-center gap-2">
+            <CardTitle className="text-sm font-mono uppercase tracking-wider flex items-center gap-2">
               <Timer className="h-4 w-4" />
               Grounding Timer
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-4xl font-mono font-bold text-center py-4">
+            <div className="text-5xl font-mono font-bold text-center py-4">
               {formatTime(timerSeconds)}
             </div>
             <div className="flex items-center justify-center gap-2">
               {!isTimerActive ? (
-                <Button onClick={startTimer} className="gap-2">
+                <Button onClick={startTimer} className="gap-2 font-mono text-xs">
                   <Play className="h-4 w-4" />
-                  Start
+                  Start 5 Minutes
                 </Button>
               ) : (
                 <>
-                  <Button variant="outline" onClick={togglePause}>
+                  <Button variant="outline" onClick={togglePause} className="font-mono">
                     {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                   </Button>
-                  <Button variant="outline" onClick={resetTimer}>
+                  <Button variant="outline" onClick={resetTimer} className="font-mono">
                     <RotateCcw className="h-4 w-4" />
                   </Button>
                 </>
@@ -292,29 +334,29 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
         </Card>
       </div>
 
-      {/* Emergency Contacts */}
+      {/* Local Emergency Contact Hub */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base font-mono flex items-center gap-2">
+          <CardTitle className="text-sm font-mono uppercase tracking-wider flex items-center gap-2">
             <Phone className="h-4 w-4" />
-            Emergency Contacts
+            Local Emergency Contact Hub
           </CardTitle>
-          <Button size="sm" variant="outline" onClick={handleNewContact} className="gap-1">
+          <Button size="sm" variant="outline" onClick={handleNewContact} className="gap-1 font-mono text-xs">
             <Plus className="h-3.5 w-3.5" />
-            Add
+            Add Node
           </Button>
         </CardHeader>
         <CardContent>
           {contacts.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No contacts added. Add emergency support numbers.
+            <p className="text-sm text-muted-foreground text-center py-6 font-mono">
+              No contact nodes configured. Add local mentors or helpline desks.
             </p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {contacts.map((contact) => (
                 <div 
                   key={contact.id}
-                  className="p-3 rounded-md bg-secondary/30 border border-border space-y-2"
+                  className="p-4 rounded-md bg-secondary/30 border border-border space-y-2"
                 >
                   <div className="flex items-start justify-between">
                     <div className={cn(privacyMode && "privacy-blur blur-transition")}>
@@ -356,31 +398,6 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
         </CardContent>
       </Card>
 
-      {/* Grounding Guides */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-mono flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            Quick Grounding Guides
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {GROUNDING_GUIDES.map((guide) => (
-              <div 
-                key={guide.title}
-                className="p-4 rounded-lg bg-secondary/30 border border-border space-y-2"
-              >
-                <h4 className="font-mono text-sm font-medium">{guide.title}</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {guide.content}
-                </p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Contact Dialog */}
       <Dialog open={isContactDialogOpen} onOpenChange={(open) => {
         setIsContactDialogOpen(open)
@@ -389,53 +406,54 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-mono">
-              {editingContact ? 'Edit Contact' : 'Add Emergency Contact'}
+              {editingContact ? 'Edit Contact Node' : 'Add Contact Node'}
             </DialogTitle>
             <DialogDescription>
-              Add a support person you can call in crisis.
+              Configure a local support contact for crisis moments.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-mono text-muted-foreground">Name</label>
+              <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Name</label>
               <Input
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
                 placeholder="Contact name"
-                className="font-mono"
+                className="font-mono bg-input border-border"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-mono text-muted-foreground">Phone</label>
+              <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Phone</label>
               <Input
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
                 placeholder="Phone number"
-                className="font-mono"
+                className="font-mono bg-input border-border"
                 type="tel"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-mono text-muted-foreground">Role</label>
+              <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Role</label>
               <Input
                 value={contactRole}
                 onChange={(e) => setContactRole(e.target.value)}
-                placeholder="e.g., Sponsor, Therapist, Friend"
-                className="font-mono"
+                placeholder="e.g., Sponsor, Therapist, Helpline"
+                className="font-mono bg-input border-border"
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsContactDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsContactDialogOpen(false)} className="font-mono text-xs">
               Cancel
             </Button>
             <Button 
               onClick={handleSaveContact} 
               disabled={!contactName.trim() || !contactPhone.trim()}
+              className="font-mono text-xs"
             >
-              {editingContact ? 'Update' : 'Save'}
+              {editingContact ? 'Update Node' : 'Save Node'}
             </Button>
           </DialogFooter>
         </DialogContent>

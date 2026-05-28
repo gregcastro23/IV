@@ -1,18 +1,17 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { 
   LayoutDashboard, 
   TableProperties, 
-  AlertOctagon,
-  Heart,
   Shield,
   Lock,
-  WifiOff,
   ChevronLeft,
   ChevronRight,
   Eye,
-  EyeOff
+  EyeOff,
+  Scale,
+  Zap
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -20,7 +19,7 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
-export type ViewType = 'dashboard' | 'resentments' | 'fears' | 'harms' | 'emergency'
+export type ViewType = 'dashboard' | 'framework' | 'balance' | 'emergency'
 
 interface SidebarProps {
   currentView: ViewType
@@ -30,12 +29,11 @@ interface SidebarProps {
   onLock: () => void
 }
 
-const navItems: { id: ViewType; label: string; icon: typeof LayoutDashboard }[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'resentments', label: 'Resentments', icon: TableProperties },
-  { id: 'fears', label: 'Fears Inventory', icon: AlertOctagon },
-  { id: 'harms', label: 'Harms & Conduct', icon: Heart },
-  { id: 'emergency', label: 'Emergency Toolkit', icon: Shield },
+const navItems: { id: ViewType; label: string; shortLabel: string; icon: typeof LayoutDashboard }[] = [
+  { id: 'dashboard', label: 'Dashboard Node', shortLabel: 'Dashboard', icon: LayoutDashboard },
+  { id: 'framework', label: 'Framework Matrix', shortLabel: 'Framework', icon: TableProperties },
+  { id: 'balance', label: 'Asset & Liability Sheet', shortLabel: 'Balance', icon: Scale },
+  { id: 'emergency', label: 'Emergency Grounding Hub', shortLabel: 'Emergency', icon: Zap },
 ]
 
 export function AppSidebar({ 
@@ -47,11 +45,22 @@ export function AppSidebar({
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
 
+  // Global Escape key listener for privacy blind
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onPrivacyModeChange(!privacyMode)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [privacyMode, onPrivacyModeChange])
+
   return (
     <TooltipProvider delayDuration={0}>
       <aside 
         className={cn(
-          "h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300",
+          "h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-200",
           collapsed ? "w-16" : "w-64"
         )}
       >
@@ -59,12 +68,9 @@ export function AppSidebar({
         <div className="p-4 flex items-center justify-between">
           {!collapsed && (
             <div className="space-y-0.5">
-              <h1 className="font-mono text-sm font-semibold text-sidebar-foreground tracking-tight">
-                The Inventory
-              </h1>
-              <p className="text-xs text-muted-foreground font-mono">
+              <h1 className="font-mono text-xs font-semibold text-sidebar-foreground tracking-[0.15em] uppercase">
                 Fourth Step Ledger
-              </p>
+              </h1>
             </div>
           )}
           <Button
@@ -83,25 +89,28 @@ export function AppSidebar({
 
         {/* Status Indicator */}
         <div className={cn(
-          "mx-4 mb-4 bg-secondary/50 border border-border rounded-md",
+          "mx-4 mb-4 bg-emerald-500/10 border border-emerald-500/30 rounded-md",
           collapsed ? "p-2" : "p-3"
         )}>
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex justify-center">
-                  <WifiOff className="h-4 w-4 text-muted-foreground" />
+                  <Shield className="h-4 w-4 text-emerald-500" />
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Disconnected / Local-Only</p>
+                <p>Isolated / Enclave Storage Sealed</p>
               </TooltipContent>
             </Tooltip>
           ) : (
             <div className="flex items-center gap-2">
-              <WifiOff className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground font-mono truncate">
-                Local-Only Mode
+              <div className="relative">
+                <Shield className="h-4 w-4 text-emerald-500 shrink-0" />
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+              <span className="text-xs text-emerald-500 font-mono truncate">
+                Isolated / Enclave Sealed
               </span>
             </div>
           )}
@@ -121,7 +130,7 @@ export function AppSidebar({
                 key={item.id}
                 variant={isActive ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-start gap-3 h-10 font-mono text-sm",
+                  "w-full justify-start gap-3 h-10 font-mono text-xs",
                   collapsed && "justify-center px-0",
                   isEmergency && !isActive && "text-primary hover:text-primary",
                   isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
@@ -132,7 +141,7 @@ export function AppSidebar({
                   "h-4 w-4 shrink-0",
                   isEmergency && !isActive && "text-primary"
                 )} />
-                {!collapsed && <span className="truncate">{item.label}</span>}
+                {!collapsed && <span className="truncate">{item.shortLabel}</span>}
               </Button>
             )
 
@@ -177,7 +186,7 @@ export function AppSidebar({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  <p>Privacy Blind {privacyMode ? 'On' : 'Off'}</p>
+                  <p>Privacy Blind {privacyMode ? 'On' : 'Off'} (Esc)</p>
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -189,7 +198,7 @@ export function AppSidebar({
                     <Eye className="h-4 w-4 text-muted-foreground shrink-0" />
                   )}
                   <span className="text-xs font-mono text-muted-foreground truncate">
-                    Privacy Blind
+                    Privacy Blind (Esc)
                   </span>
                 </div>
                 <Switch
@@ -214,7 +223,7 @@ export function AppSidebar({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Lock Application</p>
+                <p>Lock Ledger</p>
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -224,7 +233,7 @@ export function AppSidebar({
               onClick={onLock}
             >
               <Lock className="h-3.5 w-3.5" />
-              Lock Application
+              Lock Ledger
             </Button>
           )}
         </div>

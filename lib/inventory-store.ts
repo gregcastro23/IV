@@ -7,6 +7,8 @@ const STORAGE_KEYS = {
   DAILY_TASKS: 'inventory_daily_tasks',
   CONTACTS: 'inventory_contacts',
   PIN_HASH: 'inventory_pin_hash',
+  ASSET_LOGS: 'inventory_asset_logs',
+  PASSWORD_HASH: 'inventory_password_hash',
 } as const
 
 export type Resentment = {
@@ -59,6 +61,34 @@ export type Contact = {
   phone: string
   role: string
 }
+
+export type AssetLog = {
+  id: string
+  virtue: string
+  behavior: string
+  timestamp: number
+}
+
+export const CHARACTER_DEFECTS = [
+  'Selfish',
+  'Dishonest', 
+  'Inconsiderate',
+  'Frightened',
+  'Pride',
+  'Greed',
+  'Anger',
+] as const
+
+export const CHARACTER_ASSETS = [
+  'Honesty',
+  'Unselfishness',
+  'Consideration',
+  'Courage',
+  'Humility',
+] as const
+
+export type CharacterDefect = typeof CHARACTER_DEFECTS[number]
+export type CharacterAsset = typeof CHARACTER_ASSETS[number]
 
 // Generate unique ID
 export function generateId(): string {
@@ -198,6 +228,23 @@ export function deleteContact(id: string): void {
   setToStorage(STORAGE_KEYS.CONTACTS, contacts)
 }
 
+// Asset Logs
+export function getAssetLogs(): AssetLog[] {
+  return getFromStorage<AssetLog[]>(STORAGE_KEYS.ASSET_LOGS, [])
+}
+
+export function saveAssetLog(log: AssetLog): void {
+  const logs = getAssetLogs()
+  logs.unshift(log)
+  // Keep last 100 logs
+  setToStorage(STORAGE_KEYS.ASSET_LOGS, logs.slice(0, 100))
+}
+
+export function deleteAssetLog(id: string): void {
+  const logs = getAssetLogs().filter(l => l.id !== id)
+  setToStorage(STORAGE_KEYS.ASSET_LOGS, logs)
+}
+
 // PIN Management (simple hash for demo - in production use proper encryption)
 export function hashPin(pin: string): string {
   let hash = 0
@@ -219,6 +266,26 @@ export function setPinHash(pin: string): void {
   localStorage.setItem(STORAGE_KEYS.PIN_HASH, hashPin(pin))
 }
 
+export function getPasswordHash(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(STORAGE_KEYS.PASSWORD_HASH)
+}
+
+export function setPasswordHash(password: string): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(STORAGE_KEYS.PASSWORD_HASH, hashPin(password))
+}
+
+export function verifyPassword(password: string): boolean {
+  const storedHash = getPasswordHash()
+  if (!storedHash) return true
+  return hashPin(password) === storedHash
+}
+
+export function isPasswordSet(): boolean {
+  return getPasswordHash() !== null
+}
+
 export function verifyPin(pin: string): boolean {
   const storedHash = getPinHash()
   if (!storedHash) return true // No pin set yet
@@ -236,5 +303,35 @@ export function getInventoryStats() {
     fears: getFears().length,
     harms: getHarms().length,
     haltLogs: getHaltLogs().length,
+    assetLogs: getAssetLogs().length,
   }
+}
+
+// Get defect frequencies from all inventory entries
+export function getDefectFrequencies(): Record<CharacterDefect, number> {
+  const resentments = getResentments()
+  const frequencies: Record<string, number> = {}
+  
+  CHARACTER_DEFECTS.forEach(defect => {
+    frequencies[defect] = 0
+  })
+  
+  resentments.forEach(r => {
+    r.myPart.forEach(part => {
+      if (part in frequencies) {
+        frequencies[part]++
+      }
+    })
+  })
+  
+  return frequencies as Record<CharacterDefect, number>
+}
+
+// Get all defect occurrences with context
+export function getDefectOccurrences(defect: CharacterDefect): Array<{ resentment: Resentment; timestamp: number }> {
+  const resentments = getResentments()
+  return resentments
+    .filter(r => r.myPart.includes(defect))
+    .map(r => ({ resentment: r, timestamp: r.createdAt }))
+    .sort((a, b) => b.timestamp - a.timestamp)
 }

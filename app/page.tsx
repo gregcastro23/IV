@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { LockScreen } from '@/components/lock-screen'
 import { AppSidebar, type ViewType } from '@/components/app-sidebar'
 import { DashboardView } from '@/components/views/dashboard-view'
-import { ResentmentsView } from '@/components/views/resentments-view'
-import { FearsView } from '@/components/views/fears-view'
-import { HarmsView } from '@/components/views/harms-view'
+import { FrameworkMatrixView } from '@/components/views/framework-matrix-view'
+import { BalanceSheetView } from '@/components/views/balance-sheet-view'
 import { EmergencyView } from '@/components/views/emergency-view'
 
 export default function InventoryApp() {
@@ -41,12 +40,10 @@ export default function InventoryApp() {
             onNavigateToEmergency={() => setCurrentView('emergency')} 
           />
         )
-      case 'resentments':
-        return <ResentmentsView privacyMode={privacyMode} />
-      case 'fears':
-        return <FearsView privacyMode={privacyMode} />
-      case 'harms':
-        return <HarmsView privacyMode={privacyMode} />
+      case 'framework':
+        return <FrameworkMatrixView privacyMode={privacyMode} />
+      case 'balance':
+        return <BalanceSheetView privacyMode={privacyMode} />
       case 'emergency':
         return <EmergencyView privacyMode={privacyMode} />
       default:

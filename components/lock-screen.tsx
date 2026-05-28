@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from 'react'
-import { Lock, Shield, AlertTriangle } from 'lucide-react'
+import { Lock, Shield, AlertTriangle, Delete } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { verifyPin, setPinHash, isPinSet } from '@/lib/inventory-store'
+import { verifyPin, setPinHash, isPinSet, setPasswordHash, verifyPassword, isPasswordSet } from '@/lib/inventory-store'
 
 interface LockScreenProps {
   onUnlock: () => void
@@ -13,47 +13,72 @@ interface LockScreenProps {
 export function LockScreen({ onUnlock }: LockScreenProps) {
   const [pin, setPin] = useState('')
   const [confirmPin, setConfirmPin] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
-  const [isSettingPin, setIsSettingPin] = useState(false)
-  const [hasExistingPin, setHasExistingPin] = useState(false)
+  const [isSettingUp, setIsSettingUp] = useState(false)
+  const [hasExistingCredentials, setHasExistingCredentials] = useState(false)
+  const [step, setStep] = useState<'pin' | 'password'>('pin')
 
   useEffect(() => {
-    setHasExistingPin(isPinSet())
+    setHasExistingCredentials(isPinSet() || isPasswordSet())
   }, [])
 
-  const handlePinChange = (value: string, setter: (v: string) => void) => {
-    // Only allow digits, max 6 characters
-    const cleaned = value.replace(/\D/g, '').slice(0, 6)
-    setter(cleaned)
+  const handlePinDigit = (digit: string) => {
+    if (pin.length < 6) {
+      const newPin = pin + digit
+      setPin(newPin)
+      setError('')
+    }
+  }
+
+  const handlePinDelete = () => {
+    setPin(pin.slice(0, -1))
     setError('')
   }
 
   const handleSubmit = useCallback(() => {
-    if (hasExistingPin && !isSettingPin) {
-      // Verify existing PIN
-      if (verifyPin(pin)) {
+    if (hasExistingCredentials && !isSettingUp) {
+      // Verify existing credentials
+      const pinValid = verifyPin(pin)
+      const passwordValid = verifyPassword(password)
+      
+      if (pinValid && passwordValid) {
         onUnlock()
       } else {
-        setError('Incorrect passcode')
+        setError('Incorrect credentials')
         setPin('')
+        setPassword('')
       }
-    } else if (isSettingPin) {
-      // Setting new PIN
-      if (pin.length < 4) {
-        setError('Passcode must be at least 4 digits')
-        return
+    } else if (isSettingUp) {
+      if (step === 'pin') {
+        if (pin.length !== 6) {
+          setError('PIN must be exactly 6 digits')
+          return
+        }
+        if (pin !== confirmPin) {
+          setError('PINs do not match')
+          return
+        }
+        setStep('password')
+        setError('')
+      } else {
+        if (password.length < 8) {
+          setError('Password must be at least 8 characters')
+          return
+        }
+        if (password !== confirmPassword) {
+          setError('Passwords do not match')
+          return
+        }
+        setPinHash(pin)
+        setPasswordHash(password)
+        onUnlock()
       }
-      if (pin !== confirmPin) {
-        setError('Passcodes do not match')
-        return
-      }
-      setPinHash(pin)
-      onUnlock()
     } else {
-      // First time - skip or set PIN
       onUnlock()
     }
-  }, [pin, confirmPin, hasExistingPin, isSettingPin, onUnlock])
+  }, [pin, confirmPin, password, confirmPassword, hasExistingCredentials, isSettingUp, step, onUnlock])
 
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -61,140 +86,256 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     }
   }, [handleSubmit])
 
+  const pinPadDigits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-8">
+      <div className="w-full max-w-sm space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-secondary flex items-center justify-center border border-border">
             <Lock className="w-8 h-8 text-muted-foreground" />
           </div>
           <div>
-            <h1 className="font-mono text-xl tracking-tight text-foreground">
-              The Inventory
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h1 className="font-mono text-sm font-semibold text-foreground tracking-[0.2em] uppercase">
               Fourth Step Ledger
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1 font-mono">
+              Cryptographic Access Required
             </p>
           </div>
         </div>
 
-        {/* Security Notice */}
-        <div className="bg-secondary/50 border border-border rounded-lg p-4 space-y-2">
+        {/* Security Warning */}
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 space-y-2">
           <div className="flex items-start gap-3">
-            <Shield className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+            <Shield className="w-5 h-5 text-destructive mt-0.5 shrink-0" />
             <div className="space-y-1">
-              <p className="text-xs text-foreground font-medium">
-                Local-Only Security
+              <p className="text-xs text-foreground font-mono font-medium">
+                Zero-Knowledge Local Storage
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Data is fully encrypted and stored exclusively on this device. 
-                No servers, no tracking, no cloud. If you lose your passcode, 
-                your data cannot be recovered.
+                All strings are encrypted at rest using AES-GCM-256 on your local device. 
+                Data is unrecoverable if the passcode is forgotten. No cloud backup exists.
               </p>
             </div>
           </div>
         </div>
 
-        {/* PIN Entry */}
+        {/* Authentication */}
         <div className="space-y-4">
-          {hasExistingPin && !isSettingPin ? (
+          {hasExistingCredentials && !isSettingUp ? (
             // Unlock existing
-            <div className="space-y-3">
-              <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
-                Enter Passcode
-              </label>
-              <Input
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={pin}
-                onChange={(e) => handlePinChange(e.target.value, setPin)}
-                onKeyDown={handleKeyPress}
-                placeholder="••••••"
-                className="text-center text-2xl tracking-[0.5em] font-mono bg-input border-border h-14"
-                autoFocus
-              />
-            </div>
-          ) : isSettingPin ? (
-            // Set new PIN
             <div className="space-y-4">
-              <div className="space-y-3">
+              {/* PIN Display */}
+              <div className="space-y-2">
                 <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
-                  Create Passcode (4-6 digits)
+                  Enter 6-Digit PIN
                 </label>
-                <Input
-                  type="password"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={pin}
-                  onChange={(e) => handlePinChange(e.target.value, setPin)}
-                  placeholder="••••••"
-                  className="text-center text-2xl tracking-[0.5em] font-mono bg-input border-border h-14"
-                  autoFocus
-                />
+                <div className="flex justify-center gap-2">
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-10 h-12 rounded border border-border bg-input flex items-center justify-center"
+                    >
+                      {pin[i] ? (
+                        <div className="w-3 h-3 rounded-full bg-primary" />
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-3">
-                <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
-                  Confirm Passcode
-                </label>
-                <Input
-                  type="password"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={confirmPin}
-                  onChange={(e) => handlePinChange(e.target.value, setConfirmPin)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="••••••"
-                  className="text-center text-2xl tracking-[0.5em] font-mono bg-input border-border h-14"
-                />
+
+              {/* PIN Pad */}
+              <div className="grid grid-cols-3 gap-2 max-w-[240px] mx-auto">
+                {pinPadDigits.map((digit, i) => (
+                  <div key={i}>
+                    {digit === '' ? (
+                      <div className="h-12" />
+                    ) : digit === 'del' ? (
+                      <Button
+                        variant="outline"
+                        className="w-full h-12 font-mono"
+                        onClick={handlePinDelete}
+                      >
+                        <Delete className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full h-12 font-mono text-lg"
+                        onClick={() => handlePinDigit(digit)}
+                      >
+                        {digit}
+                      </Button>
+                    )}
+                  </div>
+                ))}
               </div>
+
+              {/* Password Field */}
+              {isPasswordSet() && (
+                <div className="space-y-2 pt-2">
+                  <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                    Local Password
+                  </label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="Enter password"
+                    className="font-mono bg-input border-border"
+                  />
+                </div>
+              )}
+            </div>
+          ) : isSettingUp ? (
+            // Setup new credentials
+            <div className="space-y-4">
+              {step === 'pin' ? (
+                <>
+                  {/* PIN Display */}
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                      Create 6-Digit PIN
+                    </label>
+                    <div className="flex justify-center gap-2">
+                      {[...Array(6)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-10 h-12 rounded border border-border bg-input flex items-center justify-center"
+                        >
+                          {pin[i] ? (
+                            <div className="w-3 h-3 rounded-full bg-primary" />
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* PIN Pad */}
+                  <div className="grid grid-cols-3 gap-2 max-w-[240px] mx-auto">
+                    {pinPadDigits.map((digit, i) => (
+                      <div key={i}>
+                        {digit === '' ? (
+                          <div className="h-12" />
+                        ) : digit === 'del' ? (
+                          <Button
+                            variant="outline"
+                            className="w-full h-12 font-mono"
+                            onClick={handlePinDelete}
+                          >
+                            <Delete className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            className="w-full h-12 font-mono text-lg"
+                            onClick={() => handlePinDigit(digit)}
+                          >
+                            {digit}
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Confirm PIN */}
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                      Confirm PIN
+                    </label>
+                    <Input
+                      type="password"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={confirmPin}
+                      onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="Re-enter PIN"
+                      className="text-center font-mono bg-input border-border"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                      Create Local Password (min 8 chars)
+                    </label>
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter password"
+                      className="font-mono bg-input border-border"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                      Confirm Password
+                    </label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder="Re-enter password"
+                      className="font-mono bg-input border-border"
+                    />
+                  </div>
+                </>
+              )}
             </div>
           ) : (
-            // First time - choice to set PIN or skip
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground text-center">
-                Secure your inventory with a passcode
+            // First time - choice to set up or skip
+            <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Secure your ledger with cryptographic access
               </p>
             </div>
           )}
 
           {/* Error Message */}
           {error && (
-            <div className="flex items-center gap-2 text-destructive text-sm">
+            <div className="flex items-center gap-2 text-destructive text-sm justify-center">
               <AlertTriangle className="w-4 h-4" />
-              <span>{error}</span>
+              <span className="font-mono text-xs">{error}</span>
             </div>
           )}
 
           {/* Actions */}
-          <div className="space-y-2">
-            {hasExistingPin && !isSettingPin ? (
+          <div className="space-y-2 pt-2">
+            {hasExistingCredentials && !isSettingUp ? (
               <Button 
                 onClick={handleSubmit} 
-                className="w-full h-12 font-mono"
-                disabled={pin.length < 4}
+                className="w-full h-11 font-mono text-xs tracking-wider"
+                disabled={pin.length < 6}
               >
-                Unlock
+                Unlock Ledger
               </Button>
-            ) : isSettingPin ? (
+            ) : isSettingUp ? (
               <>
                 <Button 
                   onClick={handleSubmit} 
-                  className="w-full h-12 font-mono"
-                  disabled={pin.length < 4 || confirmPin.length < 4}
+                  className="w-full h-11 font-mono text-xs tracking-wider"
+                  disabled={step === 'pin' ? pin.length !== 6 : password.length < 8}
                 >
-                  Set Passcode
+                  {step === 'pin' ? 'Continue to Password' : 'Complete Setup'}
                 </Button>
                 <Button 
                   variant="ghost" 
                   onClick={() => {
-                    setIsSettingPin(false)
+                    setIsSettingUp(false)
+                    setStep('pin')
                     setPin('')
                     setConfirmPin('')
+                    setPassword('')
+                    setConfirmPassword('')
                     setError('')
                   }}
-                  className="w-full h-10 text-muted-foreground"
+                  className="w-full h-10 text-muted-foreground text-xs"
                 >
                   Cancel
                 </Button>
@@ -202,17 +343,17 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             ) : (
               <>
                 <Button 
-                  onClick={() => setIsSettingPin(true)} 
-                  className="w-full h-12 font-mono"
+                  onClick={() => setIsSettingUp(true)} 
+                  className="w-full h-11 font-mono text-xs tracking-wider"
                 >
-                  Create Passcode
+                  Configure Cryptographic Access
                 </Button>
                 <Button 
                   variant="ghost" 
                   onClick={onUnlock}
-                  className="w-full h-10 text-muted-foreground"
+                  className="w-full h-10 text-muted-foreground text-xs"
                 >
-                  Continue Without Passcode
+                  Continue Without Protection
                 </Button>
               </>
             )}
@@ -220,9 +361,9 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
         </div>
 
         {/* Footer */}
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground/50 font-mono">
-            Disconnected / Local-Only Mode
+        <div className="text-center pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground/50 font-mono tracking-wider">
+            Isolated / Enclave Storage Sealed
           </p>
         </div>
       </div>
