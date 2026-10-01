@@ -25,14 +25,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import { getContacts, saveContact, deleteContact, generateId, type Contact } from '@/lib/inventory-store'
+import { generateId, type Contact } from '@/lib/inventory-store'
 
 interface EmergencyViewProps {
   privacyMode: boolean
+  contacts: Contact[]
+  onContactsChange: (contacts: Contact[]) => Promise<boolean>
 }
 
-export function EmergencyView({ privacyMode }: EmergencyViewProps) {
-  const [contacts, setContacts] = useState<Contact[]>([])
+export function EmergencyView({ privacyMode, contacts, onContactsChange }: EmergencyViewProps) {
+  const [saving, setSaving] = useState(false)
   const [isTimerActive, setIsTimerActive] = useState(false)
   const [timerSeconds, setTimerSeconds] = useState(300)
   const [isPaused, setIsPaused] = useState(false)
@@ -47,9 +49,6 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
   const [contactPhone, setContactPhone] = useState('')
   const [contactRole, setContactRole] = useState('')
 
-  useEffect(() => {
-    setContacts(getContacts())
-  }, [])
 
   // Timer logic
   useEffect(() => {
@@ -113,17 +112,18 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
     setEditingContact(null)
   }
 
-  const handleSaveContact = () => {
+  const handleSaveContact = async () => {
+    if (saving) return
+    setSaving(true)
     const contact: Contact = {
       id: editingContact?.id || generateId(),
       name: contactName,
       phone: contactPhone,
       role: contactRole,
     }
-    saveContact(contact)
-    setContacts(getContacts())
-    setIsContactDialogOpen(false)
-    resetContactForm()
+    const saved = await onContactsChange([...contacts.filter(item => item.id !== contact.id), contact])
+    setSaving(false)
+    if (saved) { setIsContactDialogOpen(false); resetContactForm() }
   }
 
   const handleEditContact = (contact: Contact) => {
@@ -134,9 +134,11 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
     setIsContactDialogOpen(true)
   }
 
-  const handleDeleteContact = (id: string) => {
-    deleteContact(id)
-    setContacts(getContacts())
+  const handleDeleteContact = async (id: string) => {
+    if (saving) return
+    setSaving(true)
+    await onContactsChange(contacts.filter(item => item.id !== id))
+    setSaving(false)
   }
 
   const handleNewContact = () => {
@@ -417,7 +419,7 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <fieldset disabled={saving} className="space-y-4 py-4">
             <div className="space-y-2">
               <label htmlFor="support-contact-name" className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Name</label>
               <Input
@@ -449,15 +451,15 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
                 className="font-mono bg-input border-border"
               />
             </div>
-          </div>
+          </fieldset>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsContactDialogOpen(false)} className="font-mono text-xs">
+            <Button disabled={saving} variant="outline" onClick={() => setIsContactDialogOpen(false)} className="font-mono text-xs">
               Cancel
             </Button>
             <Button 
               onClick={handleSaveContact} 
-              disabled={!contactName.trim() || !contactPhone.trim()}
+              disabled={saving || !contactName.trim() || !contactPhone.trim()}
               className="font-mono text-xs"
             >
               {editingContact ? 'Update contact' : 'Save contact'}

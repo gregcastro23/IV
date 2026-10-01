@@ -8,6 +8,15 @@
     "outDir": ".test-build",
     "rootDir": "."
   },
-  "include": ["tests/**/*.test.ts", "lib/inventory-sessions.ts", "lib/inventory-store.ts"],
-  "exclude": ["node_modules", ".next", ".test-build"]
+  "include": [
+    "tests/**/*.test.ts",
+    "lib/inventory-sessions.ts",
+    "lib/inventory-store.ts",
+    "lib/inventory-vault.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    ".test-build"
+  ]
 }

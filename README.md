@@ -55,3 +55,13 @@ The app no longer mounts the production analytics component. The font loader fet
 - `components/inventory/home-view.tsx` and `library-view.tsx`: practice home and saved sessions.
 
 Earlier standalone views remain in the source for reference; the guided workflow replaces them in the active app.
+
+## Private local vault and offline edition
+
+This release encrypts inventory content on-device with a user-held passphrase. There is no server recovery. Keep an encrypted backup from **Your inventory** and retain its passphrase. Existing readable data is migrated only after the encrypted copy is verified. Use **Lock vault** when stepping away; Esc only hides the screen.
+
+Read the [security design and limitations](SECURITY.md), including the website-update trust boundary and pending independent audit. The public `/privacy` page explains these limits before the first check-in.
+
+`pnpm build` creates both the Next.js website and `public/downloads/fourthstep-offline.html`, plus its SHA-256 checksum and source revision. The HTML is self-contained and updates only when the user downloads another copy. Local-file browser storage varies; make backups and keep the file in a stable location.
+
+Validation: `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm test:privacy`. The last command performs limited source and artifact checks, not a runtime traffic audit. Independent review instructions are in `SECURITY.md`.
