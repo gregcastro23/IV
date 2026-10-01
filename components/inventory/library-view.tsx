@@ -5,12 +5,11 @@ import { ArrowRight, BookOpen, CheckCircle2, Clock3, Download, Plus, Search } fr
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { STEP_LABELS, entryCount, formatSessionDate, sessionSearchText, type InventorySession, type ReviewContent } from '@/lib/inventory-sessions'
-import { downloadText } from './session-review'
 import { cn } from '@/lib/utils'
 
-export function LibraryView({ sessions, legacy, today, onOpen, onStart, onLegacy }: {
-  sessions: InventorySession[]; legacy: ReviewContent | null; today: string
-  onOpen: (session: InventorySession) => void; onStart: () => void; onLegacy: () => void
+export function LibraryView({ sessions, legacy, onOpen, onStart, onLegacy, onBackup }: {
+  sessions: InventorySession[]; legacy: ReviewContent | null
+  onOpen: (session: InventorySession) => void; onStart: () => void; onLegacy: () => void; onBackup: () => void
 }) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | 'complete' | 'in-progress'>('all')
@@ -32,7 +31,7 @@ export function LibraryView({ sessions, legacy, today, onOpen, onStart, onLegacy
       </button>)}</div>}
 
       {legacy && <button type="button" onClick={onLegacy} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-dashed bg-secondary/40 p-5 text-left"><div><h2 className="font-semibold">Earlier ledger entries</h2><p className="mt-1 text-sm text-muted-foreground">{entryCount(legacy)} entries from your previous ledger, kept together for review.</p></div><ArrowRight className="size-5 shrink-0 text-primary" /></button>}
-      {sessions.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-5"><p className="max-w-md text-xs leading-relaxed text-muted-foreground">Sessions stay in this browser. A backup contains your sessions and unfinished answers as readable JSON.</p><Button variant="outline" className="h-11 rounded-xl text-sm" onClick={() => downloadText(JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), sessions }, null, 2), `inventory-sessions-${today}.json`, 'application/json')}><Download className="size-4" />Download session backup</Button></div>}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-5"><p className="max-w-md text-sm leading-relaxed text-muted-foreground">Keep an encrypted recovery copy, including unfinished work and contacts. Restore it in an empty browser or the offline edition with this vault’s passphrase. We cannot recover a forgotten passphrase.</p><Button variant="outline" className="h-11 rounded-xl text-sm" onClick={onBackup}><Download className="size-4" />Download encrypted backup</Button></div>
     </div>
   )
 }

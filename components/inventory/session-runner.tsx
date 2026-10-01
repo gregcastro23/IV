@@ -29,7 +29,7 @@ const haltFields = [
 
 interface SessionRunnerProps {
   session: InventorySession
-  onChange: (session: InventorySession, requireSave?: boolean) => boolean
+  onChange: (session: InventorySession, requireSave?: boolean) => Promise<boolean>
   onPause: () => void
   onComplete: () => void
   onStartNew: () => void
@@ -46,13 +46,13 @@ export function SessionRunner({ session, onChange, onPause, onComplete, onStartN
   const allReviewed = SESSION_STEPS.slice(0, -1).every(item => session.reviewed.includes(item))
   const progress = session.completedAt ? 100 : stepIndex / SESSION_STEPS.length * 100
 
-  const goTo = (next: SessionStep) => {
-    if (onChange({ ...session, currentStep: next }, true)) { setDraftHidden(false); setError('') }
+  const goTo = async (next: SessionStep) => {
+    if (await onChange({ ...session, currentStep: next }, true)) { setDraftHidden(false); setError('') }
   }
-  const advance = () => {
+  const advance = async () => {
     try {
       const next = advanceSession(session)
-      if (onChange({ ...next, currentStep: allReviewed ? 'review' : next.currentStep }, true)) { setDraftHidden(false); setError('') }
+      if (await onChange({ ...next, currentStep: allReviewed ? 'review' : next.currentStep }, true)) { setDraftHidden(false); setError('') }
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Please finish this entry first.') }
   }
 
@@ -125,8 +125,8 @@ export function SessionRunner({ session, onChange, onPause, onComplete, onStartN
       </> : <>
         {session.draft?.section === step && !draftHidden ? <EntryEditor draft={session.draft}
           onChange={(draft, requireSave) => onChange({ ...session, draft }, requireSave)}
-          onClose={() => setDraftHidden(true)} onSave={() => {
-            try { if (onChange(saveDraftEntry(session), true)) { setDraftHidden(false); setError('') } }
+          onClose={() => setDraftHidden(true)} onSave={async () => {
+            try { if (await onChange(saveDraftEntry(session), true)) { setDraftHidden(false); setError('') } }
             catch (cause) { setError(cause instanceof Error ? cause.message : 'Please finish this entry.') }
           }} /> : <>
           <div className="space-y-3"><h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{sectionCopy[step].title}</h1><p className="text-base leading-relaxed text-muted-foreground">{sectionCopy[step].description}</p></div>
@@ -137,12 +137,12 @@ export function SessionRunner({ session, onChange, onPause, onComplete, onStartN
               const detail = 'cause' in entry ? entry.cause : 'harm' in entry ? entry.harm : entry.behavior
               return <article key={entry.id} className="rounded-2xl border bg-card p-5">
                 <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="break-words font-semibold">{title}</h2><p className="mt-2 line-clamp-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-muted-foreground">{detail}</p></div>
-                  <div className="flex shrink-0 gap-1"><Button variant="ghost" size="icon" className="size-10 rounded-lg" aria-label={`Edit ${title}`} disabled={Boolean(session.draft)} onClick={() => { if (onChange({ ...session, draft: createEntryDraft(step, entry) }, true)) setDraftHidden(false) }}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" className="size-10 rounded-lg text-muted-foreground" aria-label={`Remove ${title}`} onClick={() => setDeleteId(entry.id)}><Trash2 className="size-4" /></Button></div>
+                  <div className="flex shrink-0 gap-1"><Button variant="ghost" size="icon" className="size-10 rounded-lg" aria-label={`Edit ${title}`} disabled={Boolean(session.draft)} onClick={async () => { if (await onChange({ ...session, draft: createEntryDraft(step, entry) }, true)) setDraftHidden(false) }}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" className="size-10 rounded-lg text-muted-foreground" aria-label={`Remove ${title}`} onClick={() => setDeleteId(entry.id)}><Trash2 className="size-4" /></Button></div>
                 </div>
               </article>
             })}
           </div>
-          <Button variant="outline" disabled={Boolean(session.draft)} className="h-12 w-full rounded-xl border-dashed text-base text-primary" onClick={() => { if (onChange({ ...session, draft: createEntryDraft(step) }, true)) setDraftHidden(false) }}><Plus className="size-4" />Add {session[step].length > 0 ? 'another' : 'a'} {sectionCopy[step].singular}</Button>
+          <Button variant="outline" disabled={Boolean(session.draft)} className="h-12 w-full rounded-xl border-dashed text-base text-primary" onClick={async () => { if (await onChange({ ...session, draft: createEntryDraft(step) }, true)) setDraftHidden(false) }}><Plus className="size-4" />Add {session[step].length > 0 ? 'another' : 'a'} {sectionCopy[step].singular}</Button>
           <div className="session-actions flex flex-wrap items-center justify-between gap-3">
             <Button variant="ghost" disabled={Boolean(session.draft)} className="h-12 rounded-xl px-3" onClick={() => goTo(SESSION_STEPS[stepIndex - 1])}><ArrowLeft className="size-4" />Back</Button>
             <Button disabled={Boolean(session.draft)} className="h-12 rounded-xl px-5 text-base" onClick={advance}>
@@ -151,10 +151,10 @@ export function SessionRunner({ session, onChange, onPause, onComplete, onStartN
           </div>
         </>}
         <AlertDialog open={discardDraft} onOpenChange={setDiscardDraft}>
-          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Discard this unfinished answer?</AlertDialogTitle><AlertDialogDescription>Your saved entries stay in this session. The unfinished changes in this draft will be removed.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep writing</AlertDialogCancel><AlertDialogAction onClick={() => { if (onChange({ ...session, draft: null }, true)) { setDiscardDraft(false); setDraftHidden(false) } }}>Discard draft</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Discard this unfinished answer?</AlertDialogTitle><AlertDialogDescription>Your saved entries stay in this session. The unfinished changes in this draft will be removed.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep writing</AlertDialogCancel><AlertDialogAction onClick={async () => { if (await onChange({ ...session, draft: null }, true)) { setDiscardDraft(false); setDraftHidden(false) } }}>Discard draft</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
         </AlertDialog>
         <AlertDialog open={deleteId !== null} onOpenChange={open => { if (!open) setDeleteId(null) }}>
-          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Remove this entry?</AlertDialogTitle><AlertDialogDescription>This removes the entry from this session. You can keep it and return to it later instead.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep entry</AlertDialogCancel><AlertDialogAction onClick={() => { if (deleteId && onChange({ ...session, [step]: session[step].filter(entry => entry.id !== deleteId) }, true)) setDeleteId(null) }}>Remove entry</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Remove this entry?</AlertDialogTitle><AlertDialogDescription>This removes the entry from this session. You can keep it and return to it later instead.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep entry</AlertDialogCancel><AlertDialogAction onClick={async () => { if (deleteId && await onChange({ ...session, [step]: session[step].filter(entry => entry.id !== deleteId) }, true)) setDeleteId(null) }}>Remove entry</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
         </AlertDialog>
       </>}
     </div>

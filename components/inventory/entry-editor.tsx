@@ -43,7 +43,7 @@ const questions: Record<EntryDraft['section'], Question[]> = {
 
 interface EntryEditorProps {
   draft: EntryDraft
-  onChange: (draft: EntryDraft, requireSave?: boolean) => boolean
+  onChange: (draft: EntryDraft, requireSave?: boolean) => Promise<boolean>
   onSave: () => void
   onClose: () => void
 }

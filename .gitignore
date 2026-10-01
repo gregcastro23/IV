@@ -19,3 +19,6 @@ node_modules
 .test-build/
 *.tsbuildinfo
 .env*
+
+# Generated self-contained offline release
+public/downloads/

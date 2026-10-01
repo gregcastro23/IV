@@ -1,5 +1,5 @@
-import { InventoryShell } from '@/components/inventory/inventory-shell'
+import { VaultGate } from '@/components/inventory/vault-gate'
 
 export default function Page() {
-  return <InventoryShell />
+  return <VaultGate />
 }

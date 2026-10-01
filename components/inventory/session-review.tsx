@@ -35,6 +35,7 @@ export function SessionReview({ content, title, date, onEdit, showHalt = true }:
         <Button variant="outline" className="h-11 rounded-xl" onClick={() => window.print()}><Printer className="size-4" /> Print review</Button>
         <Button variant="outline" className="h-11 rounded-xl" onClick={() => setExportOpen(true)}><Download className="size-4" /> Export review</Button>
       </div>
+      <p className="no-print text-xs leading-relaxed text-muted-foreground">Printed and exported reviews are readable copies outside your encrypted vault.</p>
       <nav aria-label="Review sections" className="no-print flex flex-wrap gap-2">
         {sectionIds.map(section => <a key={section} href={`#review-${section}`} className="rounded-full border bg-card px-3 py-2 text-sm transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-primary">{STEP_LABELS[section]} <span className="ml-1 text-muted-foreground">{content[section].length}</span></a>)}
       </nav>
@@ -87,7 +88,7 @@ export function SessionReview({ content, title, date, onEdit, showHalt = true }:
       </section>}
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent className="no-print max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
-          <DialogHeader><DialogTitle>Export your inventory</DialogTitle><DialogDescription>A readable copy of this session. Select the text to copy it, or download a file to keep.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>Export your inventory</DialogTitle><DialogDescription>This copy is not encrypted. Anyone with the file can read it. Select the text to copy it, or download it only when you intend to share or store a readable copy.</DialogDescription></DialogHeader>
           <label htmlFor="review-export" className="sr-only">Review text to copy</label>
           <Textarea ref={exportField} id="review-export" readOnly value={exportedText} className="h-72 field-sizing-fixed resize-none bg-secondary/30 text-sm leading-relaxed" />
           <DialogFooter className="flex-wrap gap-2"><DialogClose asChild><Button variant="ghost">Done</Button></DialogClose><Button variant="outline" onClick={() => { exportField.current?.focus(); exportField.current?.select() }}>Select all text</Button><Button onClick={() => downloadText(exportedText, `inventory-${date.replace(/[^a-zA-Z0-9]/g, '-')}.txt`)}><Download className="size-4" />Download text file</Button></DialogFooter>
