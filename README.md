@@ -1,33 +1,57 @@
-# IV
+# IV · Fourth Step
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+A guided inventory you can work through a little at a time and repeat daily.
 
-## Built with v0
+The active workflow is **HALT → resentments → fears → harms → strengths → review**. Each entry uses short prompts, with a clear next action and progress through the session. Sections can be explicitly reviewed with nothing to add.
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+Answers and unfinished entries save as you go. **Save & pause** returns to the home screen; continuing restores the same question. Each new session starts clean and keeps previous sessions in **Your inventory**. The library supports search, completion filters, printable reviews, and session backups. **Export review** provides selectable text and a readable file download. Entries from the earlier ledger remain available in a separate review.
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_YGqv2aopDU6pG7SWwLQsCTTxzhok)
+## Run locally
 
-## Getting Started
+Use Node.js 22 and pnpm.
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
+```sh
+pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Checks
 
-## Learn More
+```sh
+pnpm typecheck
+pnpm test
+pnpm build
+```
 
-To learn more, take a look at the following resources:
+The tests cover date boundaries, draft restoration, entry editing, save failures, corrupt data, history preservation, completion rules, and review exports. Production builds enforce TypeScript validation.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+The original `pnpm lint` command still requires an ESLint installation and configuration; it is not currently a working check.
+
+## Vercel hosting
+
+The existing Vercel project is `cookingwithcastro-llc/v0-fourth-step-ledger`, connected to `gregcastro23/IV` with `main` as its production branch. The intended custom domain is `fourthstep.app`.
+
+`vercel.json` uses the standard pnpm install and build commands. It overrides the older project build command, which references a `.v0/inject-built-with-v0.mjs` script that is absent from this repository.
+
+## Storage and privacy
+
+Data is stored in this browser's local storage. New sessions use the versioned `inventory_sessions_v1` key; original ledger keys are read without modifying them. No server account or cloud synchronization is used.
+
+**Hide inventory** and Escape replace the visible workspace with a cover. Escape only hides; revealing requires an explicit action. Existing PIN/password screen locks remain supported, and a screen lock can be configured from the lock screen.
+
+A screen lock is an interface gate. Records and downloaded files are readable, not encrypted. Keep review downloads and JSON backups private. Clearing browser data removes the local copy; download a copy if you want to retain it elsewhere.
+
+The app no longer mounts the production analytics component. The font loader fetches Geist during development/build; fonts are served with the app after build.
+
+## Main modules
+
+- `lib/inventory-sessions.ts`: session schema, persistence, draft transitions, completion, search, and text export.
+- `components/inventory/inventory-shell.tsx`: navigation, autosave status, screen lock, privacy cover, and earlier-entry access.
+- `components/inventory/session-runner.tsx`: the six-part guided flow.
+- `components/inventory/entry-editor.tsx`: one-question-at-a-time entry prompts.
+- `components/inventory/session-review.tsx`: structured review, printing, and downloads.
+- `components/inventory/home-view.tsx` and `library-view.tsx`: practice home and saved sessions.
+
+Earlier standalone views remain in the source for reference; the guided workflow replaces them in the active app.

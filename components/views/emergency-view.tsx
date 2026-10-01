@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  Shield, 
   Phone, 
   Timer, 
   Pause, 
@@ -175,17 +174,17 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-mono font-semibold flex items-center gap-2">
+          <h1 className="text-3xl font-semibold tracking-tight flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
-            Emergency Grounding Hub
-          </h2>
+            Take a grounding break
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Tactical protocols for moments of acute volatility
+            A little space to breathe, and your support contacts within reach.
           </p>
         </div>
       </div>
 
-      {/* Full Viewport Circuit Breaker */}
+      {/* Full Viewport Grounding exercise */}
       {showCircuitBreaker && (
         <div className="fixed inset-0 z-50 bg-background">
           <div className="h-full flex flex-col items-center justify-center p-8">
@@ -194,6 +193,7 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
               variant="ghost"
               size="icon"
               className="absolute top-6 right-6 h-12 w-12"
+              aria-label="Close grounding exercise"
               onClick={() => setShowCircuitBreaker(false)}
             >
               <X className="h-6 w-6" />
@@ -204,11 +204,11 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
               <div className="flex items-center justify-center gap-3 mb-2">
                 <Zap className="h-8 w-8 text-primary" />
                 <h1 className="text-2xl font-mono font-semibold tracking-wider">
-                  CIRCUIT BREAKER ACTIVE
+                  A MOMENT TO SETTLE
                 </h1>
               </div>
               <p className="text-muted-foreground font-mono text-sm">
-                All inventory data hidden. Focus on grounding.
+                Follow the rhythm. Return to your inventory when you feel ready.
               </p>
             </div>
 
@@ -254,6 +254,7 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
                 size="lg" 
                 variant="outline" 
                 onClick={togglePause}
+                aria-label={isPaused ? 'Resume timer' : 'Pause timer'}
                 className="font-mono"
               >
                 {isPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
@@ -262,6 +263,7 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
                 size="lg" 
                 variant="outline" 
                 onClick={resetTimer}
+                aria-label="Reset timer"
                 className="font-mono"
               >
                 <RotateCcw className="h-5 w-5" />
@@ -270,25 +272,25 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
 
             {/* Exit hint */}
             <p className="absolute bottom-8 text-xs font-mono text-muted-foreground/50">
-              Press ESC or click X to exit circuit breaker
+              Close this exercise when you feel ready. Esc hides your inventory.
             </p>
           </div>
         </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Circuit Breaker Activation Card */}
+        {/* Grounding exercise Activation Card */}
         <Card className="border-primary/30 bg-primary/5">
           <CardHeader>
             <CardTitle className="text-sm font-mono uppercase tracking-wider flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary" />
-              Anxiety Circuit Breaker
+              Grounding exercise
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Immediately clears all inventory data from view and initiates a 5-minute 
-              box-breathing protocol with visual ring indicator.
+              Take five minutes to breathe. Follow the ring as it expands and settles,
+              then return to your session when you feel ready.
             </p>
             <Button 
               onClick={activateCircuitBreaker}
@@ -296,7 +298,7 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
               size="lg"
             >
               <Zap className="h-4 w-4" />
-              ACTIVATE CIRCUIT BREAKER
+              Begin breathing exercise
             </Button>
           </CardContent>
         </Card>
@@ -321,10 +323,10 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
                 </Button>
               ) : (
                 <>
-                  <Button variant="outline" onClick={togglePause} className="font-mono">
+                  <Button variant="outline" onClick={togglePause} aria-label={isPaused ? 'Resume timer' : 'Pause timer'} className="font-mono">
                     {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                   </Button>
-                  <Button variant="outline" onClick={resetTimer} className="font-mono">
+                  <Button variant="outline" onClick={resetTimer} aria-label="Reset timer" className="font-mono">
                     <RotateCcw className="h-4 w-4" />
                   </Button>
                 </>
@@ -339,17 +341,17 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-mono uppercase tracking-wider flex items-center gap-2">
             <Phone className="h-4 w-4" />
-            Local Emergency Contact Hub
+            Your support contacts
           </CardTitle>
           <Button size="sm" variant="outline" onClick={handleNewContact} className="gap-1 font-mono text-xs">
             <Plus className="h-3.5 w-3.5" />
-            Add Node
+            Add contact
           </Button>
         </CardHeader>
         <CardContent>
           {contacts.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6 font-mono">
-              No contact nodes configured. Add local mentors or helpline desks.
+              Add someone you trust, a sponsor, or a support contact.
             </p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -368,6 +370,7 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
+                        aria-label={`Edit ${contact.name}`}
                         onClick={() => handleEditContact(contact)}
                       >
                         <Pencil className="h-3 w-3" />
@@ -376,6 +379,7 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-destructive hover:text-destructive"
+                        aria-label={`Remove ${contact.name}`}
                         onClick={() => handleDeleteContact(contact.id)}
                       >
                         <Trash2 className="h-3 w-3" />
@@ -406,17 +410,18 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-mono">
-              {editingContact ? 'Edit Contact Node' : 'Add Contact Node'}
+              {editingContact ? 'Edit support contact' : 'Add support contact'}
             </DialogTitle>
             <DialogDescription>
-              Configure a local support contact for crisis moments.
+              Keep a support contact available on this device.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Name</label>
+              <label htmlFor="support-contact-name" className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Name</label>
               <Input
+                id="support-contact-name"
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
                 placeholder="Contact name"
@@ -424,8 +429,9 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Phone</label>
+              <label htmlFor="support-contact-phone" className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Phone</label>
               <Input
+                id="support-contact-phone"
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
                 placeholder="Phone number"
@@ -434,8 +440,9 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Role</label>
+              <label htmlFor="support-contact-role" className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Role</label>
               <Input
+                id="support-contact-role"
                 value={contactRole}
                 onChange={(e) => setContactRole(e.target.value)}
                 placeholder="e.g., Sponsor, Therapist, Helpline"
@@ -453,7 +460,7 @@ export function EmergencyView({ privacyMode }: EmergencyViewProps) {
               disabled={!contactName.trim() || !contactPhone.trim()}
               className="font-mono text-xs"
             >
-              {editingContact ? 'Update Node' : 'Save Node'}
+              {editingContact ? 'Update contact' : 'Save contact'}
             </Button>
           </DialogFooter>
         </DialogContent>
