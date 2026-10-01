@@ -1,14 +1,13 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
-  title: 'The Inventory',
-  description: 'Fourth Step Moral Inventory Ledger - Local Only',
+  title: 'IV · Fourth Step',
+  description: 'A guided Fourth Step inventory, one small step at a time.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -35,10 +34,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark bg-background">
-      <body className="font-sans antialiased min-h-screen bg-background">
+    <html lang="en" className="bg-background">
+      <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased min-h-screen bg-background`}>
         {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )
