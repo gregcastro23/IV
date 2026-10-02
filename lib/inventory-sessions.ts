@@ -214,3 +214,22 @@ export function reviewText(content: ReviewContent, title: string, date: string):
   ]
   return lines.join('\n')
 }
+
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!)
+/** Formatted review for pasting into Google Docs or a word processor. All answer text is escaped. */
+export function reviewHtml(content: ReviewContent, title: string, date: string): string {
+  const text = (value: string) => escapeHtml(value).replace(/\n/g, '<br>')
+  const field = (label: string, value: string) => `<p><strong>${text(label)}:</strong> ${text(value)}</p>`
+  const section = (heading: string, items: string[]) => `<h2>${text(heading)}</h2>${items.length ? items.join('') : '<p><em>Nothing added in this section.</em></p>'}`
+  const readiness = { ready: 'Ready to discuss', willing: 'Willing, with support', not_yet: 'Not ready yet' }
+  return [
+    `<h1>${text(title)}</h1><p>${text(date)}</p>`,
+    section('HALT check-in', [`<p>Hungry ${content.halt.hungry}/10 · Angry ${content.halt.angry}/10 · Lonely ${content.halt.lonely}/10 · Tired ${content.halt.tired}/10</p>`, ...(content.halt.note ? [`<p>${text(content.halt.note)}</p>`] : [])]),
+    section('Resentments', content.resentments.map((item, index) => `<h3>${index + 1}. ${text(item.object)}</h3>${field('What happened', item.cause)}${field('Affected', item.instincts.join(', ') || 'None selected')}${field('My part', item.myPart.join(', ') || 'None identified')}`)),
+    section('Fears', content.fears.map((item, index) => `<h3>${index + 1}. ${text(item.fear)}</h3>${field('Underneath it', item.cause)}${field('Affected', item.affectedInstincts.join(', ') || 'None selected')}`)),
+    section('Harms', content.harms.map((item, index) => `<h3>${index + 1}. ${text(item.person)}</h3>${field('What happened', item.harm)}${field('Possible repair', item.amends || 'Still reflecting')}${field('Readiness', readiness[item.willingness])}`)),
+    section('Strengths', content.assets.map(item => `<h3>${text(item.virtue)}</h3><p>${text(item.behavior)}</p>`)),
+    section('Reflection', [`<p>${text(content.reflection || 'No reflection added.')}</p>`]),
+    section('One next step', [`<p>${text(content.nextStep || 'No next step added.')}</p>`]),
+  ].join('')
+}

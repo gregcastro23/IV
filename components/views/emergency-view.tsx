@@ -186,6 +186,11 @@ export function EmergencyView({ privacyMode, contacts, onContactsChange }: Emerg
         </div>
       </div>
 
+      <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4 text-sm leading-relaxed">
+        <p className="font-semibold">If you might hurt yourself or someone else, call your local emergency number now.</p>
+        <p className="mt-1 text-muted-foreground">In the US, call or text <a className="font-semibold text-primary underline" href="tel:988">988</a> (Suicide &amp; Crisis Lifeline), or call SAMHSA’s free, confidential, 24/7 helpline at <a className="font-semibold text-primary underline" href="tel:18006624357">1-800-662-4357</a>.</p>
+      </div>
+
       {/* Full Viewport Grounding exercise */}
       {showCircuitBreaker && (
         <div className="fixed inset-0 z-50 bg-background">

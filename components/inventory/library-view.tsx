@@ -31,7 +31,7 @@ export function LibraryView({ sessions, legacy, onOpen, onStart, onLegacy, onBac
       </button>)}</div>}
 
       {legacy && <button type="button" onClick={onLegacy} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-dashed bg-secondary/40 p-5 text-left"><div><h2 className="font-semibold">Earlier ledger entries</h2><p className="mt-1 text-sm text-muted-foreground">{entryCount(legacy)} entries from your previous ledger, kept together for review.</p></div><ArrowRight className="size-5 shrink-0 text-primary" /></button>}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-5"><p className="max-w-md text-sm leading-relaxed text-muted-foreground">Keep an encrypted recovery copy, including unfinished work and contacts. Restore it in an empty browser or the offline edition with this vault’s passphrase. We cannot recover a forgotten passphrase.</p><Button variant="outline" className="h-11 rounded-xl text-sm" onClick={onBackup}><Download className="size-4" />Download encrypted backup</Button></div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-5"><p className="max-w-md text-sm leading-relaxed text-muted-foreground">Keep an encrypted recovery copy, including check-ins, unfinished work, and contacts. Restore it in an empty browser or the offline edition with your recovery key. Nobody can reset a lost recovery key.</p><Button variant="outline" className="h-11 rounded-xl text-sm" onClick={onBackup}><Download className="size-4" />Download encrypted backup</Button></div>
     </div>
   )
 }
