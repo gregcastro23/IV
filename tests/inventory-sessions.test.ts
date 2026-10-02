@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {
   SESSION_STORAGE_KEY, SESSION_STEPS, advanceSession, createEntryDraft,
   createInventorySession, finishInventorySession, localDate, readInventorySessions,
-  reviewText, saveDraftEntry, saveInventorySession, sessionSearchText, updateDraftValue,
+  reviewHtml, reviewText, saveDraftEntry, saveInventorySession, sessionSearchText, updateDraftValue,
   type InventorySession,
 } from '../lib/inventory-sessions'
 
@@ -136,4 +136,14 @@ test('review export contains every category and the closing reflection', () => {
     assert.ok(text.includes(value), value)
   }
   assert.ok(sessionSearchText(session).includes('a change at work'))
+})
+
+test('formatted export for Google Docs escapes every answer', () => {
+  const session = { ...sessionWithResentment(), reflection: '<img src=x onerror=alert(1)> & "quotes"\nsecond line' }
+  const html = reviewHtml(session, 'Title <b>', 'October 2, 2026')
+  assert(!html.includes('<img'), 'answer markup is never interpreted')
+  assert(html.includes('&lt;img src=x onerror=alert(1)&gt; &amp; &quot;quotes&quot;<br>second line'))
+  assert(html.includes('<h1>Title &lt;b&gt;</h1>'))
+  assert(html.includes('<h3>1. A synthetic colleague</h3>'))
+  assert(html.includes('<h2>Fears</h2><p><em>Nothing added in this section.</em></p>'))
 })

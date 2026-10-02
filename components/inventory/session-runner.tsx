@@ -70,7 +70,7 @@ export function SessionRunner({ session, onChange, onPause, onComplete, onStartN
         <div role="progressbar" aria-label="Session progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)} className="h-2.5 overflow-hidden rounded-full bg-secondary">
           <div className="h-full rounded-full bg-primary transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${progress}%` }} />
         </div>
-        <nav aria-label="Session steps" className="flex gap-2 overflow-x-auto pb-2">
+        <nav aria-label="Session steps" className="no-scrollbar flex gap-2 overflow-x-auto pb-2">
           {SESSION_STEPS.map((item, index) => <button type="button" key={item}
             disabled={(index > stepIndex && !session.reviewed.includes(item)) || (Boolean(session.draft) && item !== step)}
             aria-current={item === step ? 'step' : undefined} onClick={() => goTo(item)}
@@ -85,8 +85,8 @@ export function SessionRunner({ session, onChange, onPause, onComplete, onStartN
       {step === 'halt' ? <>
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"><Heart className="size-3.5" /> Start with a little care</div>
-          <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">How are you arriving today?</h1>
-          <p className="max-w-xl text-base leading-relaxed text-muted-foreground">Before looking inward, check in with your body and emotions. HALT means hungry, angry, lonely, and tired.</p>
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">How are you arriving right now?</h1>
+          <p className="max-w-xl text-base leading-relaxed text-muted-foreground">Before looking inward, check in with your body and emotions. HALT means hungry, angry, lonely, and tired. This check-in is saved to your timeline with the time.</p>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {haltFields.map(({ key, label, prompt, icon: Icon }) => <div key={key} className="rounded-2xl border bg-card p-4 shadow-sm sm:p-5">

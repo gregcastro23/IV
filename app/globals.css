@@ -41,6 +41,8 @@
   --warning-foreground: oklch(0.25 0.04 75);
   --success: oklch(0.45 0.10 155);
   --success-foreground: oklch(0.99 0 0);
+  /* Chart marks: the brand hue one step more saturated, validated for contrast and chroma on the card surface. */
+  --viz-line: oklch(0.5 0.12 155);
 }
 
 .dark {
@@ -76,6 +78,7 @@
   --sidebar-accent-foreground: oklch(0.92 0 0);
   --sidebar-border: oklch(0.26 0.005 285);
   --sidebar-ring: oklch(0.65 0.06 75);
+  --viz-line: oklch(0.72 0.11 155);
 }
 
 @theme inline {
@@ -152,6 +155,9 @@
 button, [role="button"] { cursor: pointer; }
 button:disabled { cursor: default; }
 .mobile-nav { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.viz-cell { background: color-mix(in oklch, var(--viz-line) var(--level), var(--card)); }
 .session-actions {
   position: sticky;
   bottom: 5.1rem;
@@ -159,10 +165,10 @@ button:disabled { cursor: default; }
   margin-inline: -1rem;
   padding: 1rem;
   border-top: 1px solid var(--border);
-  background: color-mix(in oklch, var(--background) 96%, transparent);
+  background: color-mix(in srgb, var(--background) 96%, transparent);
   backdrop-filter: blur(12px);
 }
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .session-actions { bottom: 0; margin-inline: 0; padding-inline: 0; }
 }
 @media (prefers-reduced-motion: reduce) {

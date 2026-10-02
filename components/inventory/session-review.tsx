@@ -1,11 +1,11 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Download, Pencil, Printer, Sparkles } from 'lucide-react'
+import { Check, Clipboard, Download, ExternalLink, Pencil, Printer, Share2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import { STEP_LABELS, reviewText, type EntrySection, type ReviewContent } from '@/lib/inventory-sessions'
+import { STEP_LABELS, reviewHtml, reviewText, type EntrySection, type ReviewContent } from '@/lib/inventory-sessions'
 
 const sectionIds: EntrySection[] = ['resentments', 'fears', 'harms', 'assets']
 
@@ -25,8 +25,27 @@ export function SessionReview({ content, title, date, onEdit, showHalt = true }:
   content: ReviewContent; title: string; date: string; onEdit?: (section: EntrySection | 'halt') => void; showHalt?: boolean
 }) {
   const [exportOpen, setExportOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [exportNote, setExportNote] = useState('')
   const exportField = useRef<HTMLTextAreaElement>(null)
   const exportedText = reviewText(content, title, date)
+  const filename = `inventory-${date.replace(/[^a-zA-Z0-9]/g, '-')}.txt`
+  const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+  // Rich text keeps headings when pasted into Google Docs; plain text is the fallback everywhere else.
+  const copyFormatted = async () => {
+    try {
+      if (typeof ClipboardItem === 'function' && navigator.clipboard?.write) {
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([reviewHtml(content, title, date)], { type: 'text/html' }), 'text/plain': new Blob([exportedText], { type: 'text/plain' }) })])
+      } else await navigator.clipboard.writeText(exportedText)
+      setCopied(true); setExportNote('Copied. Open a new Google Doc and paste.')
+    } catch { setExportNote('Copying is blocked in this browser. Select the text below and copy it instead.') }
+  }
+  const share = async () => {
+    try {
+      const file = new File([exportedText], filename, { type: 'text/plain' })
+      await navigator.share(navigator.canShare?.({ files: [file] }) ? { files: [file], title } : { title, text: exportedText })
+    } catch (cause) { if (!(cause instanceof DOMException && cause.name === 'AbortError')) setExportNote('Sharing did not work here. Download the file instead.') }
+  }
   const patterns = content.resentments.flatMap(item => item.myPart).reduce<Record<string, number>>((counts, part) => ({ ...counts, [part]: (counts[part] ?? 0) + 1 }), {})
   return (
     <div className="space-y-6" id="inventory-review">
@@ -86,12 +105,22 @@ export function SessionReview({ content, title, date, onEdit, showHalt = true }:
         {content.reflection && <><h2 className="font-semibold">What you are taking away</h2><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{content.reflection}</p></>}
         {content.nextStep && <div className={content.reflection ? 'mt-5' : ''}><h2 className="font-semibold">One next step</h2><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{content.nextStep}</p></div>}
       </section>}
-      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+      <Dialog open={exportOpen} onOpenChange={open => { setExportOpen(open); if (!open) { setCopied(false); setExportNote('') } }}>
         <DialogContent className="no-print max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
-          <DialogHeader><DialogTitle>Export your inventory</DialogTitle><DialogDescription>This copy is not encrypted. Anyone with the file can read it. Select the text to copy it, or download it only when you intend to share or store a readable copy.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>Export your inventory</DialogTitle><DialogDescription>Exports leave your encrypted vault. Anyone who can open the copy, including the service that stores it, can read it. Share or store a readable copy only when you mean to.</DialogDescription></DialogHeader>
+          <section className="space-y-3 rounded-xl border bg-secondary/30 p-4">
+            <h3 className="text-sm font-semibold">Put it in a Google Doc</h3>
+            <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground"><li>Copy it formatted, with headings.</li><li>Open a new Google Doc and paste.</li></ol>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => void copyFormatted()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? 'Copied' : 'Copy for Google Docs'}</Button>
+              <Button variant="outline" asChild><a href="https://docs.new" target="_blank" rel="noopener noreferrer"><ExternalLink className="size-4" />Open a new Google Doc</a></Button>
+            </div>
+            {exportNote && <p role="status" className="text-sm text-primary">{exportNote}</p>}
+            <p className="text-xs leading-relaxed text-muted-foreground">Nothing is sent from this app: you paste it yourself. Google can read documents stored in Google Docs.</p>
+          </section>
           <label htmlFor="review-export" className="sr-only">Review text to copy</label>
-          <Textarea ref={exportField} id="review-export" readOnly value={exportedText} className="h-72 field-sizing-fixed resize-none bg-secondary/30 text-sm leading-relaxed" />
-          <DialogFooter className="flex-wrap gap-2"><DialogClose asChild><Button variant="ghost">Done</Button></DialogClose><Button variant="outline" onClick={() => { exportField.current?.focus(); exportField.current?.select() }}>Select all text</Button><Button onClick={() => downloadText(exportedText, `inventory-${date.replace(/[^a-zA-Z0-9]/g, '-')}.txt`)}><Download className="size-4" />Download text file</Button></DialogFooter>
+          <Textarea ref={exportField} id="review-export" readOnly value={exportedText} className="h-56 field-sizing-fixed resize-none bg-secondary/30 text-sm leading-relaxed" />
+          <DialogFooter className="flex-wrap gap-2"><DialogClose asChild><Button variant="ghost">Done</Button></DialogClose><Button variant="outline" onClick={() => { exportField.current?.focus(); exportField.current?.select() }}>Select all text</Button>{canShare && <Button variant="outline" onClick={() => void share()}><Share2 className="size-4" />Share…</Button>}<Button onClick={() => downloadText(exportedText, filename)}><Download className="size-4" />Download text file</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
